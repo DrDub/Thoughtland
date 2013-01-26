@@ -21,16 +21,16 @@ package net.duboue.thoughtland.cloud
 import net.duboue.thoughtland.CloudExtractor
 import net.duboue.thoughtland.cloud.weka.WekaCloudExtractor
 
-sealed abstract class MachineLearningEngine {
+sealed abstract class CloudExtractorEngine {
   def apply(): CloudExtractor
 }
 
-case class WekaEngine extends MachineLearningEngine {
+case class WekaEngine extends CloudExtractorEngine {
   def apply() = new WekaCloudExtractor()
 }
 
 object CloudExtractorFactory {
-  def apply(engine: MachineLearningEngine) = engine()
+  def apply(engine: CloudExtractorEngine) = engine()
 
   def apply(engine: String): WekaCloudExtractor =  engine.toLowerCase() match {
     case "weka" => WekaEngine().apply()

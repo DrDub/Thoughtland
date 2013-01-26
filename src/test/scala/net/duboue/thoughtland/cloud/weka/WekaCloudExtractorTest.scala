@@ -31,12 +31,26 @@ class WekaCloudExtractorTest {
 
   @Test
   def testCloudGeneration = {
-    val stream = classOf[WekaCloudExtractorTest].getResourceAsStream("auto-mpg.arff")
+    val stream = new java.io.BufferedReader(new java.io.InputStreamReader(classOf[WekaCloudExtractorTest].getResourceAsStream("auto-mpg.arff")))
     val arff = File.createTempFile("auto-mpg", ".arff")
     arff.deleteOnExit()
+    val pw = new java.io.PrintWriter(arff) // something less java-ey will be good here
+    try {
+      var line = stream.readLine()
+      while (line != null) {
+        pw.println(line)
+        line = stream.readLine()
+      }
+    } finally {
+      stream.close()
+      pw.close()
+    }
+
     val extractor = new WekaCloudExtractor()
     implicit val env = Environment(new File("."), new File("/tmp"), Config(1L, false))
-    val points = extractor(TrainingData(arff.toURI()), classOf[MultilayerPerceptron].getName(), Array("-H", "9,4")).points
+    val points = extractor(TrainingData(arff.toURI()), classOf[MultilayerPerceptron].getName(), Array("-c", "0", "-H", "9,4")).points
+    for (vector <- points)
+      System.out.println(vector.toList)
   }
 
 }
