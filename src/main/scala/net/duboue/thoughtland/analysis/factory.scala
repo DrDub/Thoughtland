@@ -17,3 +17,12 @@
  */
 
 package net.duboue.thoughtland.analysis
+
+import net.duboue.thoughtland.ComponentAnalyzer
+
+object AnalyzerFactory {
+
+  def apply(engine: String): ComponentAnalyzer =  engine.toLowerCase() match {
+    case _ => null
+  } 
+}

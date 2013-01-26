@@ -16,13 +16,23 @@
  *   License along with Thoughtland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.duboue.thoughtland.cluster
+package net.duboue.thoughtland.cloud.file
 
-import net.duboue.thoughtland.Clusterer
+import net.duboue.thoughtland.CloudExtractor
+import net.duboue.thoughtland.TrainingData
+import net.duboue.thoughtland.CloudPoints
+import net.duboue.thoughtland.Environment
+import java.io.File
+import scala.collection.JavaConversions._
+import com.google.common.io.Files
+import java.nio.charset.Charset
 
-object ClustererFactory {
-
-  def apply(engine: String): Clusterer =  engine.toLowerCase() match {
-    case _ => null
-  } 
+class FileCloudExtractor extends CloudExtractor {
+  def apply(data: TrainingData, algo: String, baseParams: Array[String])(implicit env: Environment): CloudPoints = {
+    val lines = Files.readLines(new File(data.uri.getPath()), Charset.forName("UTF-8"))
+    val vectors = lines.map {
+      line => line.split(",").map { s => s.toDouble }.toArray[Double]
+    }.toArray[Array[Double]]
+    CloudPoints(vectors)
+  }
 }

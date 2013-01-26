@@ -16,13 +16,22 @@
  *   License along with Thoughtland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.duboue.thoughtland.cluster
+package net.duboue.thoughtland
 
-import net.duboue.thoughtland.Clusterer
+import net.duboue.thoughtland.cloud.CloudExtractorFactory
+import net.duboue.thoughtland.cluster.ClustererFactory
+import net.duboue.thoughtland.analysis.AnalyzerFactory
+import net.duboue.thoughtland.nlg.GeneratorFactory
 
-object ClustererFactory {
+object ThoughtlandDriver {
+  val default = Seq("weka", "mahout", "basic", "templates")
+  def apply(components: String*): Thoughtland = components match {
+    case Seq("default") => apply(default: _*)
+    case Seq(clouder, clusterer, analyzer, generator) =>
+      Thoughtland(CloudExtractorFactory(clouder),
+        ClustererFactory(clusterer),
+        AnalyzerFactory(analyzer),
+        GeneratorFactory(generator))
+  }
 
-  def apply(engine: String): Clusterer =  engine.toLowerCase() match {
-    case _ => null
-  } 
 }

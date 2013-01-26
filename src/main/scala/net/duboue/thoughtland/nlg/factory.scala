@@ -18,4 +18,11 @@
 
 package net.duboue.thoughtland.nlg
 
+import net.duboue.thoughtland.Generator
 
+object GeneratorFactory {
+
+  def apply(engine: String): Generator = engine.toLowerCase() match {
+    case _ => null
+  }
+}

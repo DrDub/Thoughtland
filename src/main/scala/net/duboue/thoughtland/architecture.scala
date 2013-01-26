@@ -18,24 +18,24 @@
 
 package net.duboue.thoughtland
 
- /**
+/**
  * Architecture interfaces for Thoughtland.
- * 
+ *
  * The different implementations are in each package.
  *
  * Thoughtland is a pipeline of four components:
  *
  * 1. A CloudExtractor, that extract points by training a machine learning model (or by other means)
- * 
+ *
  * 2. A Clusterer, that turns the cloud of points into a cluster components + a full set cluster (for references)
  *
  * 3. A ComponentAnalyzer, that takes the cluster components and full set cluster and find interesting relations among them.
- * 
+ *
  * 4. A Generator, that takes the relations and produces a textual description.
- *  
+ *
  */
 
-trait CloudExtractor{
+trait CloudExtractor {
   def apply(data: TrainingData, algo: String, params: Array[String])(implicit env: Environment): CloudPoints
 }
 
@@ -51,6 +51,8 @@ trait Generator {
   def apply(analyis: Analysis)(implicit env: Environment): GeneratedText
 }
 
-
-
-
+// full system
+case class Thoughtland(extractor: CloudExtractor, clusterer: Clusterer, analyzer: ComponentAnalyzer, generator: Generator) {
+  def apply(data: TrainingData, algo: String, params: Array[String])(implicit env: Environment): GeneratedText =
+    generator(analyzer(clusterer(extractor(data, algo, params))))
+}

@@ -20,6 +20,7 @@ package net.duboue.thoughtland.cloud
 
 import net.duboue.thoughtland.CloudExtractor
 import net.duboue.thoughtland.cloud.weka.WekaCloudExtractor
+import net.duboue.thoughtland.cloud.file.FileCloudExtractor
 
 sealed abstract class CloudExtractorEngine {
   def apply(): CloudExtractor
@@ -29,10 +30,15 @@ case class WekaEngine extends CloudExtractorEngine {
   def apply() = new WekaCloudExtractor()
 }
 
+case class FileEngine extends CloudExtractorEngine {
+  def apply() = new FileCloudExtractor()
+}
+
 object CloudExtractorFactory {
   def apply(engine: CloudExtractorEngine) = engine()
 
-  def apply(engine: String): WekaCloudExtractor =  engine.toLowerCase() match {
+  def apply(engine: String): CloudExtractor =  engine.toLowerCase() match {
     case "weka" => WekaEngine().apply()
+    case "file" => FileEngine().apply()
   } 
 }
