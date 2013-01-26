@@ -25,14 +25,21 @@ import net.duboue.thoughtland.Environment
 import weka.classifiers.Classifier
 import java.lang.reflect.Field
 import weka.core.converters.ConverterUtils.DataSource
-import scala.concurrent._
+import scala.actors.Futures
 import scala.collection.JavaConversions._
-import ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext.Implicits.global
 import weka.core.Instances
+import scala.reflect.ClassTag
+import scala.collection.Map
+import scala.collection.mutable.HashMap
 
 abstract class WekaClassifierExtractor[T <: Classifier] {
 
-  def pinpoint(clazz: Class[_], fieldName: String): Field = clazz.getField(fieldName)
+  def pinpoint(clazz: Class[_], fieldName: String): Field = {
+    val field = clazz.getDeclaredField(fieldName)
+    field.setAccessible(true)
+    field
+  }
 
   def extractInt(obj: Any, field: Field) = field.getInt(obj)
   def extractDouble(obj: Any, field: Field) = field.getDouble(obj)
@@ -45,21 +52,25 @@ abstract class WekaClassifierExtractor[T <: Classifier] {
 }
 
 class WekaCloudExtractor extends CloudExtractor {
-  def apply(data: TrainingData, algo: String, params: Array[String])(implicit env: Environment): CloudPoints = {
+  def apply(data: TrainingData, algo: String, baseParams: Array[String])(implicit env: Environment): CloudPoints = {
+    val params = baseParams ++ List("-S", env.config.randomSeed.toString)
+
     // get the data in RAM, data is assumed to be an ARFF file
-    val instances = new DataSource(data.uri.toString()).getDataSet()
+    val instances = new DataSource(data.uri.toURL().toString()).getDataSet()
+    //    val instances = new DataSource(data.uri.toString().replace("file:/", "file://")).getDataSet()
 
     // map the algo to the extractor
-    val extractor = Class.forName("net.duboue.thoughtland.cloud.weka." + algo.split(".").last +
-      "Extractor").newInstance().asInstanceOf[WekaClassifierExtractor[Classifier]]
+    System.out.println(algo)
+    val extractorName = "net.duboue.thoughtland.cloud.weka." + algo.split("\\.").last + "Extractor"
+    val extractor = Class.forName(extractorName).newInstance().asInstanceOf[WekaClassifierExtractor[Classifier]]
 
     // do the leave-one-out in parallel
     case class WekaResults(points: Array[Double], expected: Double, returned: Double)
 
-    val results = blocking {
+    val results = Futures.awaitAll(0,
       0.to(instances.numInstances() - 1).map {
         idx =>
-          future[WekaResults] {
+          Futures.future({
             val foldInstances = new Instances(instances)
             val evalInstances = new Instances(instances)
             evalInstances.delete();
@@ -71,21 +82,24 @@ class WekaCloudExtractor extends CloudExtractor {
             classifier.buildClassifier(foldInstances)
             val classified = classifier.classifyInstance(evalInstance)
             WekaResults(extractor.extract(classifier), evalInstance.classValue(), classified)
-          }
-      }
-    }
+          })
+      }: _*)
 
     // get the points
     var acc = 0
+    val confusionMatrix = new HashMap[Double, Map[Double, Int]]
 
-    val result = results map { f =>
-      f() match {
+    val result: Seq[Array[Double]] = results map { o => o.get } map { r =>
+      r match {
         case WekaResults(points, expected, actual) =>
           if (expected == actual)
             acc += 1;
-          return points
+          if (!confusionMatrix.contains(expected))
+            confusionMatrix += expected -> new HashMap[Double, Int]
+          confusionMatrix(expected) += actual -> (confusionMatrix(expected).getOrElse(actual, 0) + 1)
+          points
       }
     }
-    return null;
+    return CloudPoints(result.toArray(ClassTag(classOf[Double])));
   }
 }

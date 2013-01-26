@@ -8,15 +8,15 @@
   <inceptionYear>2013</inceptionYear>
   <licenses>
     <license>
-      <name>My License</name>
-      <url>http://....</url>
+      <name>AGPLv3+</name>
+      <url>http://www.gnu.org/licenses/agpl-3.0.html</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
 
   <properties>
-    <maven.compiler.source>1.5</maven.compiler.source>
-    <maven.compiler.target>1.5</maven.compiler.target>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
     <encoding>UTF-8</encoding>
     <scala.version>2.10.0</scala.version>
     <scala.short_version>2.10</scala.short_version>
@@ -125,7 +125,7 @@
           <useFile>false</useFile>
           <disableXmlReport>true</disableXmlReport>
           <!-- If you have classpath issue like NoDefClassError,... -->
-          <!-- useManifestOnlyJar>false</useManifestOnlyJar -->
+          <useManifestOnlyJar>false</useManifestOnlyJar>
           <includes>
             <include>**/*Test.*</include>
             <include>**/*Suite.*</include>
