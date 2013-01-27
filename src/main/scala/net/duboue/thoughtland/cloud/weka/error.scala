@@ -18,42 +18,17 @@
 
 package net.duboue.thoughtland.cloud.weka
 
-import java.lang.reflect.Field
-
 import net.duboue.thoughtland.CloudPoints
 import net.duboue.thoughtland.Environment
 import net.duboue.thoughtland.TrainingData
 import weka.classifiers.Classifier
 
 /**
- * A model parameters extractor. Uses reflection on JVMs with a permissive security
- * manager to extract private field values.
- *
- */
-abstract class WekaClassifierExtractor[T <: Classifier] {
-
-  def pinpoint(clazz: Class[_], fieldName: String): Field = {
-    val field = clazz.getDeclaredField(fieldName)
-    field.setAccessible(true)
-    field
-  }
-
-  def extractInt(obj: Any, field: Field) = field.getInt(obj)
-  def extractDouble(obj: Any, field: Field) = field.getDouble(obj)
-  def extractFloat(obj: Any, field: Field) = field.getFloat(obj)
-  def extractBoolean(obj: Any, field: Field) = field.getBoolean(obj)
-
-  def extract[X](obj: Any, field: Field): X = field.get(obj).asInstanceOf[X]
-
-  def extract(classifier: T): Array[Double]
-}
-
-/**
- * Extract an n-dimensional cloud of points where each point contains the parameters of
- * the model (e.g., weights in a neural network).
+ * Extract an n-dimensional cloud of points where each point are the input attributes plus the error of a
+ * cross-validated model on that input.
  */
 
-class WekaCloudExtractor extends WekaCrossValExtractor {
+class WekaErrorCloudExtractor extends WekaCrossValExtractor {
   def apply(data: TrainingData, algo: String, baseParams: Array[String])(implicit env: Environment): CloudPoints = {
 
     // map the algo to the extractor
@@ -62,7 +37,10 @@ class WekaCloudExtractor extends WekaCrossValExtractor {
 
     return apply(data, algo, baseParams,
       { (classifier, testInstance, expected, actual) =>
-        extractor.extract(classifier)
+        val array = testInstance.toDoubleArray()
+        val error = Math.abs(expected - actual)
+        array(testInstance.classIndex()) = error * error
+        array
       })
   }
 }

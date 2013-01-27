@@ -19,8 +19,9 @@
 package net.duboue.thoughtland.cloud
 
 import net.duboue.thoughtland.CloudExtractor
-import net.duboue.thoughtland.cloud.weka.WekaCloudExtractor
 import net.duboue.thoughtland.cloud.file.FileCloudExtractor
+import net.duboue.thoughtland.cloud.weka.WekaCloudExtractor
+import net.duboue.thoughtland.cloud.weka.WekaErrorCloudExtractor
 
 object CloudExtractorEngine extends Enumeration {
   type CloudExtractorEngine = CloudExtractorEngineVal
@@ -28,6 +29,7 @@ object CloudExtractorEngine extends Enumeration {
   case class CloudExtractorEngineVal(name: String, make: () => CloudExtractor) extends Val(name)
 
   val Weka = CloudExtractorEngineVal("weka", { () => new WekaCloudExtractor() })
+  val WekaError = CloudExtractorEngineVal("wekaerror", { () => new WekaErrorCloudExtractor() })
   val File = CloudExtractorEngineVal("file", { () => new FileCloudExtractor() })
 
   implicit def valueToCloudExtractorEngine(v: Value): CloudExtractorEngineVal = v.asInstanceOf[CloudExtractorEngineVal]

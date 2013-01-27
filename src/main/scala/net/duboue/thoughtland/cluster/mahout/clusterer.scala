@@ -73,20 +73,19 @@ class MahoutClusterer extends Clusterer {
     def cluster(output: Path, iter: Int, numCluster: Int) =
       DirichletDriver.run(conf, seqFile, output,
         new DistributionDescription(classOf[GaussianClusterDistribution].getName(), classOf[DenseVector].getName(),
-//            classOf[ManhattanDistanceMeasure].getName(),
-//            classOf[CosineDistanceMeasure].getName(),
-//            classOf[TanimotoDistanceMeasure].getName(),
-          classOf[EuclideanDistanceMeasure].getName(), 
+          //            classOf[ManhattanDistanceMeasure].getName(),
+          //            classOf[CosineDistanceMeasure].getName(),
+          //            classOf[TanimotoDistanceMeasure].getName(),
+          classOf[EuclideanDistanceMeasure].getName(),
           cloud.points(0).length),
         numCluster, iter, 1.0, true, false, 0.0001, true)
-        
+
     val mainIter = numIter / 10
 
     cluster(outputDir0, mainIter, 1)
     System.out.println("Main")
     cluster(outputDir, numIter, 20)
     System.out.println("Cluster")
-
 
     def clusterToComponent(gaussian: GaussianCluster): Component = {
       implicit def vectorElemToDouble(v: Vector): Array[Double] =
@@ -103,6 +102,11 @@ class MahoutClusterer extends Clusterer {
       record =>
         record.getSecond().getValue().asInstanceOf[GaussianCluster]
     } filter { gaussian => gaussian.getNumObservations() > 0 } map clusterToComponent
+
+    System.out.println(parts.size)
+    System.out.println(parts)
+    for (component <- parts)
+      System.out.println(component.center.mkString("", ", ", ""))
 
     Components(mainComponent, parts.toList)
   }

@@ -27,6 +27,13 @@ import java.io.File
 object App {
 
   def main(args: Array[String]) {
-    ThoughtlandDriver("default").apply(TrainingData(new URI(args(0))), args(1), args.take(2), 500)(Environment(new File("/tmp"), new File("/tmp"), Config(1, false)))
+    val tmpDir = new File(File.createTempFile("thoughland", "").getAbsolutePath() + ".dir")
+    tmpDir.mkdirs()
+
+    val generated = ThoughtlandDriver("default").apply(TrainingData(new URI(args(0))), args(1),
+      args.drop(2), 500)(Environment(new File("/tmp"), tmpDir, Config(1, false)))
+
+    System.out.println(generated)
+    System.exit(0)
   }
 }

@@ -34,10 +34,10 @@ case class Components(main: Component, parts: List[Component])
 abstract class Finding; // see findings.scala for the actual findings
 case class Analysis(numberOfComponents: Int, numberOfDimensions: Int, findings: List[Finding])
 
-case class GeneratedText(paras: Array[Paragraph]) {
+case class GeneratedText(paras: List[Paragraph]) {
   override def toString = paras.mkString("\n")
 }
-case class Paragraph(sent: Array[Sentence]) {
+case class Paragraph(sent: List[Sentence]) {
   override def toString = sent.mkString(". ")
 }
 case class Sentence(text: String) {

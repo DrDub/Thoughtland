@@ -42,6 +42,8 @@ class BasicAnalyzer extends ComponentAnalyzer {
   def gamma(x: Double): Double = Math.exp(logGamma(x))
 
   def apply(clusters: Components)(implicit env: Environment): Analysis = {
+    System.out.println("Analyzer starting")
+
     val numComponents = clusters.parts.length
     val n = clusters.main.center.length
     val nDiv2 = n / 2.0
@@ -56,6 +58,8 @@ class BasicAnalyzer extends ComponentAnalyzer {
     val findings = new scala.collection.mutable.ArrayBuffer[Finding]
 
     for (i <- 0.to(numComponents - 1)) {
+      System.out.println(s"Analyzing component $i")
+
       val component = clusters.parts(i)
       val covered = component.coveredPoints
       var volume = cn
@@ -94,6 +98,7 @@ class BasicAnalyzer extends ComponentAnalyzer {
           findings += ComponentDistance(i, j, Small)
       }
     }
+    System.out.println("Done analysis")
 
     Analysis(numComponents, n, findings.toList)
   }

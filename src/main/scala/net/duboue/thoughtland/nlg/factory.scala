@@ -19,10 +19,19 @@
 package net.duboue.thoughtland.nlg
 
 import net.duboue.thoughtland.Generator
+import net.duboue.thoughtland.nlg.template.TemplateGenerator
+
+object GeneratorEngine extends Enumeration {
+  type GeneratorEngine = GeneratorEngineVal
+
+  case class GeneratorEngineVal(name: String, make: () => Generator) extends Val(name)
+
+  val Template = GeneratorEngineVal("template", { () => new TemplateGenerator() })
+
+  implicit def valueToGeneratorEngine(v: Value): GeneratorEngineVal = v.asInstanceOf[GeneratorEngineVal]
+}
 
 object GeneratorFactory {
-
-  def apply(engine: String): Generator = engine.toLowerCase() match {
-    case _ => null
-  }
+  def apply(engine: GeneratorEngine.GeneratorEngine) = engine.make()
+  def apply(engine: String): Generator = GeneratorEngine.withName(engine.toLowerCase()).make()
 }

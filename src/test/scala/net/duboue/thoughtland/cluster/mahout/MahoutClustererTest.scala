@@ -42,10 +42,5 @@ class MahoutClustererTest {
       .apply(TrainingData(classOf[MahoutClustererTest].getResource("auto-mpg-points2.csv").toURI), "", Array())
     assertEquals(397, cloud.points.length)
     val components = ClustererFactory(ClustererEngine.Mahout).apply(cloud, 1000)
-    System.out.println(components)
-    System.out.println(components.parts.length)
-    System.out.println(components.main.center.toList)
-    for (component <- components.parts)
-      System.out.println(component.center.mkString("", ", ", ""))
   }
 }
