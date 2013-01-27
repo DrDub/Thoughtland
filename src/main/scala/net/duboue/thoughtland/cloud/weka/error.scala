@@ -31,10 +31,6 @@ import weka.classifiers.Classifier
 class WekaErrorCloudExtractor extends WekaCrossValExtractor {
   def apply(data: TrainingData, algo: String, baseParams: Array[String])(implicit env: Environment): CloudPoints = {
 
-    // map the algo to the extractor
-    val extractorName = "net.duboue.thoughtland.cloud.weka." + algo.split("\\.").last + "Extractor"
-    val extractor = Class.forName(extractorName).newInstance().asInstanceOf[WekaClassifierExtractor[Classifier]]
-
     return apply(data, algo, baseParams,
       { (classifier, testInstance, expected, actual) =>
         val array = testInstance.toDoubleArray()

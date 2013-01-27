@@ -35,10 +35,10 @@ abstract class Finding; // see findings.scala for the actual findings
 case class Analysis(numberOfComponents: Int, numberOfDimensions: Int, findings: List[Finding])
 
 case class GeneratedText(paras: List[Paragraph]) {
-  override def toString = paras.mkString("\n")
+  override def toString = paras.mkString("", "\n", "\n")
 }
 case class Paragraph(sent: List[Sentence]) {
-  override def toString = sent.mkString(". ")
+  override def toString = sent.mkString("", ". ", ".")
 }
 case class Sentence(text: String) {
   override def toString = text

@@ -50,7 +50,8 @@ class BasicAnalyzer extends ComponentAnalyzer {
     val cn = Math.pow(Math.PI, nDiv2) / gamma(nDiv2 + 1)
     var fullVolume = cn
     for (i <- 0.to(n - 1)) {
-      fullVolume *= clusters.main.radii(i)
+      if (!clusters.main.radii(i).isNaN())
+        fullVolume *= clusters.main.radii(i)
     }
     val totalPoints = clusters.main.coveredPoints
     val mainDensity = totalPoints / fullVolume
@@ -64,18 +65,27 @@ class BasicAnalyzer extends ComponentAnalyzer {
       val covered = component.coveredPoints
       var volume = cn
       for (j <- 0.to(n - 1)) {
-        volume *= component.radii(j)
+        if (!component.radii(j).isNaN())
+          volume *= component.radii(j)
       }
       if (volume > fullVolume / 2)
         findings += ComponentSize(i, VeryBig)
       else if (volume > fullVolume / 10)
         findings += ComponentSize(i, Big)
+      else if (volume < fullVolume / 50)
+        findings += ComponentSize(i, Small)
+
+      System.out.println(s"vol: $volume $fullVolume")
 
       val density = covered / volume
-      if (density > mainDensity)
+      if (density > 10 * mainDensity)
+        findings += ComponentDensity(i, VeryBig)
+      else if (density > mainDensity)
         findings += ComponentDensity(i, Big)
       else if (density < mainDensity / 2)
         findings += ComponentDensity(i, Small)
+
+      System.out.println(s"den: $density $mainDensity")
 
       for (j <- (i + 1).to(numComponents - 1)) {
         val other = clusters.parts(j)
@@ -83,7 +93,7 @@ class BasicAnalyzer extends ComponentAnalyzer {
         var medium = false
         for (k <- 0.to(n - 1)) {
           val delta = Math.abs(component.center(k) - other.center(k))
-          val main = 3 * clusters.main.radii(k)
+          val main = clusters.main.radii(k)
           if (delta > main) {
             big = true
           } else if (delta > main / 10)
