@@ -16,7 +16,7 @@
  *   License along with Thoughtland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.duboue.thoughtland.analyzer.basic
+package net.duboue.thoughtland.analysis.basic
 
 import net.duboue.thoughtland.Components
 import net.duboue.thoughtland.Analysis

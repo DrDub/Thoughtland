@@ -26,10 +26,10 @@ import net.duboue.thoughtland.Environment
 import net.duboue.thoughtland.TrainingData
 import weka.classifiers.functions.MultilayerPerceptron
 import net.duboue.thoughtland.cloud.CloudExtractorFactory
-import net.duboue.thoughtland.cloud.FileEngine
+import net.duboue.thoughtland.cloud.CloudExtractorEngine
 import net.duboue.thoughtland.TrainingData
 import net.duboue.thoughtland.cluster.ClustererFactory
-import net.duboue.thoughtland.cluster.MahoutEngine
+import net.duboue.thoughtland.cluster.ClustererEngine
 
 @Test
 class MahoutClustererTest {
@@ -38,9 +38,10 @@ class MahoutClustererTest {
     val tmpDir = new File(File.createTempFile("test", "mahout").getAbsolutePath() + ".dir")
     assertTrue(tmpDir.mkdirs())
     implicit val env = Environment(new File("."), tmpDir, Config(1L, false))
-    val cloud = CloudExtractorFactory(FileEngine()).apply(TrainingData(classOf[MahoutClustererTest].getResource("auto-mpg-points2.csv").toURI), "", Array())
+    val cloud = CloudExtractorFactory(CloudExtractorEngine.File)
+      .apply(TrainingData(classOf[MahoutClustererTest].getResource("auto-mpg-points2.csv").toURI), "", Array())
     assertEquals(397, cloud.points.length)
-    val components = ClustererFactory(MahoutEngine()).apply(cloud, 1000)
+    val components = ClustererFactory(ClustererEngine.Mahout).apply(cloud, 1000)
     System.out.println(components)
     System.out.println(components.parts.length)
     System.out.println(components.main.center.toList)

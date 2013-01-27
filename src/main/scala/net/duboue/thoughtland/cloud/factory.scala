@@ -22,23 +22,18 @@ import net.duboue.thoughtland.CloudExtractor
 import net.duboue.thoughtland.cloud.weka.WekaCloudExtractor
 import net.duboue.thoughtland.cloud.file.FileCloudExtractor
 
-sealed abstract class CloudExtractorEngine {
-  def apply(): CloudExtractor
-}
+object CloudExtractorEngine extends Enumeration {
+  type CloudExtractorEngine = CloudExtractorEngineVal
 
-case class WekaEngine extends CloudExtractorEngine {
-  def apply() = new WekaCloudExtractor()
-}
+  case class CloudExtractorEngineVal(name: String, make: () => CloudExtractor) extends Val(name)
 
-case class FileEngine extends CloudExtractorEngine {
-  def apply() = new FileCloudExtractor()
+  val Weka = CloudExtractorEngineVal("weka", { () => new WekaCloudExtractor() })
+  val File = CloudExtractorEngineVal("file", { () => new FileCloudExtractor() })
+
+  implicit def valueToCloudExtractorEngine(v: Value): CloudExtractorEngineVal = v.asInstanceOf[CloudExtractorEngineVal]
 }
 
 object CloudExtractorFactory {
-  def apply(engine: CloudExtractorEngine) = engine()
-
-  def apply(engine: String): CloudExtractor =  engine.toLowerCase() match {
-    case "weka" => WekaEngine().apply()
-    case "file" => FileEngine().apply()
-  } 
+  def apply(engine: CloudExtractorEngine.CloudExtractorEngine) = engine.make()
+  def apply(engine: String): CloudExtractor = CloudExtractorEngine.withName(engine.toLowerCase()).make()
 }

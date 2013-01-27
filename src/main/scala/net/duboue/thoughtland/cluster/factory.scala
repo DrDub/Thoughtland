@@ -21,19 +21,17 @@ package net.duboue.thoughtland.cluster
 import net.duboue.thoughtland.Clusterer
 import net.duboue.thoughtland.cluster.mahout.MahoutClusterer
 
-sealed abstract class ClustererEngine {
-  def apply(): Clusterer
-}
+object ClustererEngine extends Enumeration {
+  type ClustererEngine = ClustererEngineVal
 
-case class MahoutEngine extends ClustererEngine {
-  def apply() = new MahoutClusterer()
+  case class ClustererEngineVal(name: String, make: () => Clusterer) extends Val(name)
+
+  val Mahout = ClustererEngineVal("mahout", { () => new MahoutClusterer() })
+
+  implicit def valueToClustererEngine(v: Value): ClustererEngineVal = v.asInstanceOf[ClustererEngineVal]
 }
 
 object ClustererFactory {
-
-  def apply(engine: ClustererEngine): Clusterer =  engine.apply()
-
-  def apply(engine: String): Clusterer =  engine.toLowerCase() match {
-    case "mahout" => MahoutEngine().apply()
-  } 
+  def apply(engine: ClustererEngine.ClustererEngine) = engine.make()
+  def apply(engine: String): Clusterer = ClustererEngine.withName(engine.toLowerCase()).make()
 }

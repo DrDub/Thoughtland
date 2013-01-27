@@ -19,10 +19,19 @@
 package net.duboue.thoughtland.analysis
 
 import net.duboue.thoughtland.ComponentAnalyzer
+import net.duboue.thoughtland.analysis.basic.BasicAnalyzer
+
+object AnalyzerEngine extends Enumeration {
+  type AnalyzerEngine = AnalyzerEngineVal
+
+  case class AnalyzerEngineVal(name: String, make: () => ComponentAnalyzer) extends Val(name)
+
+  val Basic = AnalyzerEngineVal("basic", { () => new BasicAnalyzer() })
+
+  implicit def valueToAnalyzerEngine(v: Value): AnalyzerEngineVal = v.asInstanceOf[AnalyzerEngineVal]
+}
 
 object AnalyzerFactory {
-
-  def apply(engine: String): ComponentAnalyzer =  engine.toLowerCase() match {
-    case _ => null
-  } 
+  def apply(engine: AnalyzerEngine.AnalyzerEngine) = engine.make()
+  def apply(engine: String): ComponentAnalyzer = AnalyzerEngine.withName(engine.toLowerCase()).make()
 }
