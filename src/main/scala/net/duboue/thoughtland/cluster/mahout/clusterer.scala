@@ -19,51 +19,33 @@
 package net.duboue.thoughtland.cluster.mahout
 
 import java.io.File
-
 import scala.collection.JavaConversions._
-
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.Path
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.io.IntWritable
-import org.apache.hadoop.io.IntWritable
-import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.io.SequenceFile
 import org.apache.hadoop.io.Text
-import org.apache.hadoop.io.Text
 import org.apache.mahout.clustering.dirichlet.DirichletDriver
-import org.apache.mahout.clustering.dirichlet.DirichletDriver
-import org.apache.mahout.clustering.dirichlet.models.DistributionDescription
 import org.apache.mahout.clustering.dirichlet.models.DistributionDescription
 import org.apache.mahout.clustering.dirichlet.models.GaussianCluster
 import org.apache.mahout.clustering.dirichlet.models.GaussianClusterDistribution
-import org.apache.mahout.clustering.dirichlet.models.GaussianClusterDistribution
-import org.apache.mahout.clustering.dirichlet.models.GaussianClusterDistribution
 import org.apache.mahout.clustering.iterator.ClusterWritable
-import org.apache.mahout.clustering.iterator.ClusterWritable
-import org.apache.mahout.common.distance.EuclideanDistanceMeasure
-import org.apache.mahout.common.distance.EuclideanDistanceMeasure
-import org.apache.mahout.common.iterator.sequencefile.PathFilters
 import org.apache.mahout.common.iterator.sequencefile.PathFilters
 import org.apache.mahout.common.iterator.sequencefile.PathType
-import org.apache.mahout.common.iterator.sequencefile.PathType
-import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirIterable
 import org.apache.mahout.common.iterator.sequencefile.SequenceFileDirIterable
 import org.apache.mahout.math.DenseVector
-import org.apache.mahout.math.DenseVector
-import org.apache.mahout.math.Vector
 import org.apache.mahout.math.Vector
 import org.apache.mahout.math.VectorWritable
-import org.apache.mahout.math.VectorWritable
-
 import net.duboue.thoughtland.CloudPoints
 import net.duboue.thoughtland.Clusterer
 import net.duboue.thoughtland.Component
 import net.duboue.thoughtland.Components
 import net.duboue.thoughtland.Environment
+import org.apache.mahout.common.distance.TanimotoDistanceMeasure
+import org.apache.mahout.common.distance.CosineDistanceMeasure
+import org.apache.mahout.common.distance.ManhattanDistanceMeasure
+import org.apache.mahout.common.distance.EuclideanDistanceMeasure
 
 class MahoutClusterer extends Clusterer {
   def apply(cloud: CloudPoints, numIter: Int)(implicit env: Environment): Components = {
@@ -72,30 +54,39 @@ class MahoutClusterer extends Clusterer {
 
     val conf = new Configuration()
     val fs = FileSystem.getLocal(conf)
-    val valbaseDir = new Path(env.tmpDir.toURI().toString())
+    val valbaseDir = new Path(env.tmpDir.toURI())
     val seqFile = new Path(valbaseDir, "input.seq")
     val stateDir = new Path(valbaseDir, "state")
     val outputDir0 = new Path(valbaseDir, "output0")
     val outputDir = new Path(valbaseDir, "output")
 
     // write them
-    val writer = new SequenceFile.Writer(fs, conf, seqFile, classOf[Text], classOf[VectorWritable]);
-    var vectorWritable = new VectorWritable()
+    val writer = new SequenceFile.Writer(fs, conf, seqFile, classOf[Text], classOf[VectorWritable])
     var i = 0
     for (vector <- vectors) {
-      vectorWritable.set(vector);
-      writer.append(new Text("point-" + i), vectorWritable);
+      writer.append(new Text(s"point-$i"), new VectorWritable(vector));
       i += 1
     }
     writer.close();
     System.out.println("Wrote")
 
-    DirichletDriver.run(conf, seqFile, outputDir0, new DistributionDescription(classOf[GaussianClusterDistribution].getName(), classOf[DenseVector].getName(), classOf[EuclideanDistanceMeasure].getName(),
-      cloud.points.length), 1, 50, 1.0, false, true, 0.0, true)
-    DirichletDriver.run(conf, seqFile, outputDir, new DistributionDescription(classOf[GaussianClusterDistribution].getName(), classOf[DenseVector].getName(), classOf[EuclideanDistanceMeasure].getName(),
-      cloud.points.length), 10, numIter, 1.0, false, true, 0.2, true)
+    def cluster(output: Path, iter: Int, numCluster: Int) =
+      DirichletDriver.run(conf, seqFile, output,
+        new DistributionDescription(classOf[GaussianClusterDistribution].getName(), classOf[DenseVector].getName(),
+//            classOf[ManhattanDistanceMeasure].getName(),
+//            classOf[CosineDistanceMeasure].getName(),
+//            classOf[TanimotoDistanceMeasure].getName(),
+          classOf[EuclideanDistanceMeasure].getName(), 
+          cloud.points(0).length),
+        numCluster, iter, 1.0, true, false, 0.0001, true)
+        
+    val mainIter = numIter / 10
 
+    cluster(outputDir0, mainIter, 1)
+    System.out.println("Main")
+    cluster(outputDir, numIter, 20)
     System.out.println("Cluster")
+
 
     def clusterToComponent(gaussian: GaussianCluster): Component = {
       implicit def vectorElemToDouble(v: Vector): Array[Double] =
@@ -104,11 +95,11 @@ class MahoutClusterer extends Clusterer {
     }
 
     val mainComponent = clusterToComponent(new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir0,
-      "clusters-50-final"), PathType.LIST, PathFilters.logsCRCFilter(),
+      s"clusters-$mainIter-final"), PathType.LIST, PathFilters.logsCRCFilter(),
       conf).head.getSecond().getValue().asInstanceOf[GaussianCluster])
 
     val parts = new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir,
-      "clusters-" + numIter + "-final"), PathType.LIST, PathFilters.logsCRCFilter(), conf).map {
+      s"clusters-$numIter-final"), PathType.LIST, PathFilters.logsCRCFilter(), conf).map {
       record =>
         record.getSecond().getValue().asInstanceOf[GaussianCluster]
     } filter { gaussian => gaussian.getNumObservations() > 0 } map clusterToComponent

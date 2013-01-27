@@ -31,6 +31,8 @@ case class MahoutEngine extends ClustererEngine {
 
 object ClustererFactory {
 
+  def apply(engine: ClustererEngine): Clusterer =  engine.apply()
+
   def apply(engine: String): Clusterer =  engine.toLowerCase() match {
     case "mahout" => MahoutEngine().apply()
   } 
