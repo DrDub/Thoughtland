@@ -18,32 +18,27 @@
 
 package net.duboue.thoughtland
 
-import java.net.URI
-
 /**
- * Types for Thoughtland.
+ * Analysis results
  */
 
-case class TrainingData(uri: URI)
+object RelativeMagnitude extends Enumeration {
+  type RelativeMagnitude = RelativeMagnitudeVal
 
-case class CloudPoints(points: Array[Array[Double]])
+  case class RelativeMagnitudeVal(name: String) extends Val(name);
 
-case class Component(center: Array[Double], radii: Array[Double], coveredPoints: Long)
-case class Components(main: Component, parts: List[Component])
+  val VeryBig = RelativeMagnitudeVal("VeryBig")
+  val Big = RelativeMagnitudeVal("Big")
+  val Medium = RelativeMagnitudeVal("Medium")
+  val Small = RelativeMagnitudeVal("Small")
+  val VerySmall = RelativeMagnitudeVal("verySmall")
 
-abstract class Finding; // see findings.scala for the actual findings
-case class Analysis(numberOfComponents: Int, numberOfDimensions: Int, findings: List[Finding])
-
-case class GeneratedText(paras: Array[Paragraph]) {
-  override def toString = paras.mkString("\n")
-}
-case class Paragraph(sent: Array[Sentence]) {
-  override def toString = sent.mkString(". ")
-}
-case class Sentence(text: String) {
-  override def toString = text
+  implicit def valueToRelativeMagnitude(v: Value): RelativeMagnitudeVal = v.asInstanceOf[RelativeMagnitudeVal]
 }
 
-case class Config(randomSeed: Long, storeResults: Boolean)
-case class Environment(resultsDir: java.io.File, tmpDir: java.io.File, config: Config)
+import RelativeMagnitude._
+
+case class ComponentDensity(component: Int, density: RelativeMagnitude.RelativeMagnitude) extends Finding
+case class ComponentSize(component: Int, size: RelativeMagnitude.RelativeMagnitude) extends Finding
+case class ComponentDistance(c1: Int, c2: Int, distance: RelativeMagnitude.RelativeMagnitude) extends Finding
 

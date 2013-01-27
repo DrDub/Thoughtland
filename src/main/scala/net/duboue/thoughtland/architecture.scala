@@ -40,7 +40,7 @@ trait CloudExtractor {
 }
 
 trait Clusterer {
-  def apply(cloud: CloudPoints)(implicit env: Environment): Components
+  def apply(cloud: CloudPoints, numIter: Int)(implicit env: Environment): Components
 }
 
 trait ComponentAnalyzer {
@@ -53,6 +53,6 @@ trait Generator {
 
 // full system
 case class Thoughtland(extractor: CloudExtractor, clusterer: Clusterer, analyzer: ComponentAnalyzer, generator: Generator) {
-  def apply(data: TrainingData, algo: String, params: Array[String])(implicit env: Environment): GeneratedText =
-    generator(analyzer(clusterer(extractor(data, algo, params))))
+  def apply(data: TrainingData, algo: String, params: Array[String], numIter: Int)(implicit env: Environment): GeneratedText =
+    generator(analyzer(clusterer(extractor(data, algo, params), numIter)))
 }

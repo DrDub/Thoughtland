@@ -19,10 +19,19 @@
 package net.duboue.thoughtland.cluster
 
 import net.duboue.thoughtland.Clusterer
+import net.duboue.thoughtland.cluster.mahout.MahoutClusterer
+
+sealed abstract class ClustererEngine {
+  def apply(): Clusterer
+}
+
+case class MahoutEngine extends ClustererEngine {
+  def apply() = new MahoutClusterer()
+}
 
 object ClustererFactory {
 
   def apply(engine: String): Clusterer =  engine.toLowerCase() match {
-    case _ => null
+    case "mahout" => MahoutEngine().apply()
   } 
 }

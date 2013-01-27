@@ -18,13 +18,14 @@
 
 package net.duboue.thoughtland.cloud.weka
 
-import org.junit._
-import Assert._
 import java.io.File
+
+import org.junit._
+
+import net.duboue.thoughtland.Config
+import net.duboue.thoughtland.Environment
 import net.duboue.thoughtland.TrainingData
 import weka.classifiers.functions.MultilayerPerceptron
-import net.duboue.thoughtland.Environment
-import net.duboue.thoughtland.Config
 
 @Test
 class WekaCloudExtractorTest {
@@ -49,8 +50,10 @@ class WekaCloudExtractorTest {
     val extractor = new WekaCloudExtractor()
     implicit val env = Environment(new File("."), new File("/tmp"), Config(1L, false))
     val points = extractor(TrainingData(arff.toURI()), classOf[MultilayerPerceptron].getName(), Array("-c", "0", "-H", "9,4")).points
-    for (vector <- points)
-      System.out.println(vector.toList)
+    val pointsPW= new java.io.PrintWriter(new java.io.File("/tmp/points.csv"))
+    for (vector <- points){
+      pointsPW.println(vector.toList.mkString("", ", ", ""))
+    }
   }
 
 }
