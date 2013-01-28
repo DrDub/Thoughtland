@@ -23,7 +23,6 @@ target
 build
 null
 tmp*
-temp*
 dist
 test-output
 build.log
@@ -37,6 +36,4 @@ build.log
 #  syntax: regexp
 #  ^\.pc/
 
-#SHITTY output not in target directory
-build.log
 .cache
