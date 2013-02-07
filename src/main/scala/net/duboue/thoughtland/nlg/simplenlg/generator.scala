@@ -16,24 +16,23 @@
  *   License along with Thoughtland.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.duboue.thoughtland.nlg
+package net.duboue.thoughtland.nlg.simplenlg
 
+import net.duboue.thoughtland.Analysis
+import net.duboue.thoughtland.ComponentDensity
+import net.duboue.thoughtland.ComponentDistance
+import net.duboue.thoughtland.ComponentSize
+import net.duboue.thoughtland.Environment
+import net.duboue.thoughtland.Finding
+import net.duboue.thoughtland.GeneratedText
 import net.duboue.thoughtland.Generator
-import net.duboue.thoughtland.nlg.template.TemplateGenerator
-import net.duboue.thoughtland.nlg.simplenlg.SimpleNlgGenerator
+import net.duboue.thoughtland.Paragraph
+import net.duboue.thoughtland.Sentence
+import net.duboue.thoughtland.RelativeMagnitude
 
-object GeneratorEngine extends Enumeration {
-  type GeneratorEngine = GeneratorEngineVal
+class SimpleNlgGenerator extends Generator {
 
-  case class GeneratorEngineVal(name: String, make: () => Generator) extends Val(name)
+  def apply(analysis: Analysis)(implicit env: Environment): GeneratedText = null;
 
-  val Template = GeneratorEngineVal("template", { () => new TemplateGenerator() })
-  val SimpleNLG = GeneratorEngineVal("simplenlg", { () => new SimpleNlgGenerator() })
-
-  implicit def valueToGeneratorEngine(v: Value): GeneratorEngineVal = v.asInstanceOf[GeneratorEngineVal]
 }
 
-object GeneratorFactory {
-  def apply(engine: GeneratorEngine.GeneratorEngine) = engine.make()
-  def apply(engine: String): Generator = GeneratorEngine.withName(engine.toLowerCase()).make()
-}

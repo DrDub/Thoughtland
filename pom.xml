@@ -1,138 +1,162 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>net.duboue</groupId>
-  <artifactId>thoughtland</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>${project.artifactId}</name>
-  <description>Verbalizing n-dimensional objects.</description>
-  <inceptionYear>2013</inceptionYear>
-  <licenses>
-    <license>
-      <name>AGPLv3+</name>
-      <url>http://www.gnu.org/licenses/agpl-3.0.html</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>net.duboue</groupId>
+	<artifactId>thoughtland</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>${project.artifactId}</name>
+	<description>Verbalizing n-dimensional objects.</description>
+	<inceptionYear>2013</inceptionYear>
+	<licenses>
+		<license>
+			<name>AGPLv3+</name>
+			<url>http://www.gnu.org/licenses/agpl-3.0.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
-  <properties>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
-    <encoding>UTF-8</encoding>
-    <scala.version>2.10.0</scala.version>
-    <scala.short_version>2.10</scala.short_version>
-  </properties>
+	<properties>
+		<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.7</maven.compiler.target>
+		<encoding>UTF-8</encoding>
+		<scala.version>2.10.0</scala.version>
+		<scala.short_version>2.10</scala.short_version>
+	</properties>
 
-<!--
-  <repositories>
-    <repository>
-      <id>scala-tools.org</id>
-      <name>Scala-Tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </repository>
-  </repositories>
+	<!-- <repositories> <repository> <id>scala-tools.org</id> <name>Scala-Tools 
+		Maven2 Repository</name> <url>http://scala-tools.org/repo-releases</url> 
+		</repository> </repositories> <pluginRepositories> <pluginRepository> <id>scala-tools.org</id> 
+		<name>Scala-Tools Maven2 Repository</name> <url>http://scala-tools.org/repo-releases</url> 
+		</pluginRepository> </pluginRepositories> -->
+	<dependencies>
+		<dependency>
+			<groupId>org.scala-lang</groupId>
+			<artifactId>scala-library</artifactId>
+			<version>${scala.version}</version>
+		</dependency>
 
-  <pluginRepositories>
-    <pluginRepository>
-      <id>scala-tools.org</id>
-      <name>Scala-Tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </pluginRepository>
-  </pluginRepositories>
--->
-  <dependencies>
-    <dependency>
-      <groupId>org.scala-lang</groupId>
-      <artifactId>scala-library</artifactId>
-      <version>${scala.version}</version>
-    </dependency>
+		<!-- Test -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.scala-tools.testing</groupId>
+			<artifactId>specs_${scala.short_version}</artifactId>
+			<version>1.6.9</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.scalatest</groupId>
+			<artifactId>scalatest_${scala.version}</artifactId>
+			<version>2.0.M5</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>14.0-rc1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout-core</artifactId>
+			<version>0.7</version>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout-integration</artifactId>
+			<version>0.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.mahout</groupId>
+			<artifactId>mahout-examples</artifactId>
+			<version>0.7</version>
+		</dependency>
+		<dependency>
+			<groupId>nz.ac.waikato.cms.weka</groupId>
+			<artifactId>weka-stable</artifactId>
+			<version>3.6.8</version>
+		</dependency>
+		<dependency>
+			<groupId>simplenlg</groupId>
+			<artifactId>simplenlg</artifactId>
+			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.openschema</groupId>
+			<artifactId>openschema</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
 
-    <!-- Test -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.scala-tools.testing</groupId>
-      <artifactId>specs_${scala.short_version}</artifactId>
-      <version>1.6.9</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_${scala.version}</artifactId>
-      <version>2.0.M5</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-    	<groupId>com.google.guava</groupId>
-    	<artifactId>guava</artifactId>
-    	<version>14.0-rc1</version>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.mahout</groupId>
-    	<artifactId>mahout-core</artifactId>
-    	<version>0.7</version>
-    	<type>jar</type>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.mahout</groupId>
-    	<artifactId>mahout-integration</artifactId>
-    	<version>0.7</version>
-    </dependency>
-    <dependency>
-    	<groupId>org.apache.mahout</groupId>
-    	<artifactId>mahout-examples</artifactId>
-    	<version>0.7</version>
-    </dependency>
-    <dependency>
-    	<groupId>nz.ac.waikato.cms.weka</groupId>
-    	<artifactId>weka-stable</artifactId>
-    	<version>3.6.8</version>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <!--  sourceDirectory>src/main/scala</sourceDirectory>
-    <testSourceDirectory>src/test/scala</testSourceDirectory -->
-    <plugins>
-      <plugin>
-        <groupId>org.scala-tools</groupId>
-        <artifactId>maven-scala-plugin</artifactId>
-        <version>2.15.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <args>
-                <arg>-make:transitive</arg>
-                <arg>-dependencyfile</arg>
-                <arg>${project.build.directory}/.scala_dependencies</arg>
-              </args>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.6</version>
-        <configuration>
-          <useFile>false</useFile>
-          <disableXmlReport>true</disableXmlReport>
-          <!-- If you have classpath issue like NoDefClassError,... -->
-          <useManifestOnlyJar>false</useManifestOnlyJar>
-          <includes>
-            <include>**/*Test.*</include>
-            <include>**/*Suite.*</include>
-          </includes>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
-  <url>http://thouhtland.duboue.net</url>
+	<build>
+		<!-- sourceDirectory>src/main/scala</sourceDirectory> <testSourceDirectory>src/test/scala</testSourceDirectory -->
+		<plugins>
+			<plugin>
+				<groupId>org.scala-tools</groupId>
+				<artifactId>maven-scala-plugin</artifactId>
+				<version>2.15.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>compile</goal>
+							<goal>testCompile</goal>
+						</goals>
+						<configuration>
+							<args>
+								<arg>-make:transitive</arg>
+								<arg>-dependencyfile</arg>
+								<arg>${project.build.directory}/.scala_dependencies</arg>
+							</args>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.6</version>
+				<configuration>
+					<useFile>false</useFile>
+					<disableXmlReport>true</disableXmlReport>
+					<!-- If you have classpath issue like NoDefClassError,... -->
+					<useManifestOnlyJar>false</useManifestOnlyJar>
+					<includes>
+						<include>**/*Test.*</include>
+						<include>**/*Suite.*</include>
+					</includes>
+				</configuration>
+			</plugin>
+			<!-- <plugin> <groupId>com.savage7.maven.plugins</groupId> <artifactId>maven-external-dependency-plugin</artifactId> 
+				<version>0.4</version> <configuration> <stagingDirectory> ${project.build.directory}/dependencies/ 
+				</stagingDirectory> <artifactItems> <artifactItem> <groupId>simplenlg</groupId> 
+				<artifactId>simplenlg</artifactId> <version>4.3</version> <packaging>jar</packaging> 
+				<downloadUrl> http://simplenlg.googlecode.com/files/simplenlg-v43.zip </downloadUrl> 
+				<extractFile>simplenlgv4.3.jar</extractFile> </artifactItem> </artifactItems> 
+				</configuration> <executions> <execution> <id>clean-external-dependencies</id> 
+				<phase>clean</phase> <goals> <goal>clean-external</goal> </goals> </execution> 
+				<execution> <id>resolve-install-external-dependencies</id> <phase>process-resources</phase> 
+				<goals> <goal>resolve-external</goal> <goal>install-external</goal> </goals> 
+				</execution> <execution> <id>deploy-external-dependencies</id> <phase>deploy</phase> 
+				<goals> <goal>deploy-external</goal> </goals> </execution> </executions> 
+				</plugin> -->
+		</plugins>
+	</build>
+	<repositories>
+		<repository>
+			<id>ecl-releases</id>
+			<name>ECL releases</name>
+			<url>http://www.coli.uni-saarland.de/projects/ecl/maven2/releases</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	<url>http://thouhtland.duboue.net</url>
 </project>
