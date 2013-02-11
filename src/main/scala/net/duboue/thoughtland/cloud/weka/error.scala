@@ -35,7 +35,7 @@ class WekaErrorCloudExtractor extends WekaCrossValExtractor {
       { (classifier, testInstance, expected, actual) =>
         val array = testInstance.toDoubleArray()
         val error = Math.abs(expected - actual)
-        array(testInstance.classIndex()) = error * error
+        array(testInstance.classIndex()) = error * error * 100
         array
       })
   }
