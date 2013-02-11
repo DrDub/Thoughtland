@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+
+<rdf:RDF 
+xmlns:rdf= "http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+xml:base=  "http://local/">
+
+<rdfs:Class rdf:ID="c-n-ball" />
+
+<rdfs:Class rdf:ID="c-full-cloud">
+<rdfs:subClassOf rdf:resource="#c-n-ball"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-attribute" />
+
+<rdfs:Class rdf:ID="c-size">
+<rdfs:subClassOf rdf:resource="#c-attribute"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-density">
+<rdfs:subClassOf rdf:resource="#c-attribute"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-distance">
+<rdfs:subClassOf rdf:resource="#c-attribute"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-magnitude"/>
+
+<rdfs:Class rdf:ID="c-very-big">
+<rdfs:subClassOf rdf:resource="#c-magnitude"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-big">
+<rdfs:subClassOf rdf:resource="#c-magnitude"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-medium">
+<rdfs:subClassOf rdf:resource="#c-magnitude"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-small">
+<rdfs:subClassOf rdf:resource="#c-magnitude"/>
+</rdfs:Class>
+
+<rdfs:Class rdf:ID="c-very-small">
+<rdfs:subClassOf rdf:resource="#c-magnitude"/>
+</rdfs:Class>
+
+</rdf:RDF>

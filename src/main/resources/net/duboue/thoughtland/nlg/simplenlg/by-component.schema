@@ -1,0 +1,66 @@
+predicate pred-intro
+  variables
+    req def cloud : c-full-cloud 
+  properties  
+  output
+    template "There are @components. components and @dimensions. dimensions. "
+    components    cloud.components
+    dimensions    cloud.dimensions
+    ; preds
+    pred c-conjunction
+    0 
+      pred has-components
+      pred0 cloud
+      pred1 components
+    1 
+      pred has-dimensions
+      pred0 cloud
+      pred1 dimensions
+
+predicate pred-component
+  variables
+    req cloud : c-full-cloud
+    def component : c-n-ball
+  properties  
+    component == cloud.component
+  output
+    template "There is a component @name.. "
+    name       component.name
+    pred c-conjunction
+    0
+      pred has-component
+      pred0 cloud
+      pred1 component
+    1
+      pred attributive
+      pred0 component
+      pred1 name
+
+predicate pred-attribute
+  variables
+    req def component : c-n-ball
+    attribute : c-attribute
+  properties  
+    component == attribute.component
+  output
+    template "Component @name.'s @type. is @magnitude.. "
+    name       component.name
+    type       attribute.#TYPE
+    magnitude  attribute.magnitude.#TYPE
+    pred has-attribute
+    pred0 component
+    pred1 attribute
+    pred1 magnitude
+
+; schema starts here
+
+schema by-component(whole: c-full-cloud)  
+  ; name of the schema 'by-component'
+  ; whole is the cloud of points, with components
+
+  ; first sentence, overall numbers
+  pred-intro(cloud|whole)
+  plus ; go
+    pred-component(cloud|whole,component|component)
+    star
+      pred-attribute(component|component)
