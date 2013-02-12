@@ -1,0 +1,105 @@
+predicate pred-intro
+  variables
+    req def cloud : c-full-cloud 
+  properties  
+  output
+    template "There are @components. components and @dimensions. dimensions. "
+    components    cloud.components
+    dimensions    cloud.dimensions
+    ; preds
+    pred c-conjunction
+    0 
+      pred has-components
+      pred0 cloud
+      pred1 components
+    1 
+      pred has-dimensions
+      pred0 cloud
+      pred1 dimensions
+
+predicate pred-component
+  variables
+    req cloud : c-full-cloud
+    def component : c-n-ball
+  properties  
+    component == cloud.component
+  output
+    template "There is a component @name.. "
+    name       component.name
+    pred c-conjunction
+    0
+      pred has-component
+      pred0 cloud
+      pred1 component
+    1
+      pred attributive
+      pred0 component
+      pred1 name
+
+predicate pred-size
+  variables
+    req def component : c-n-ball
+    req attribute : c-size
+    def magnitude : c-magnitude
+  properties  
+    component == attribute.component
+    magnitude == attribute.magnitude
+  output
+    template "Component @name.'s @type. is @magnitude-type.. "
+    name       component.name
+    type       attribute.#TYPE
+    magnitude-type  magnitude.#TYPE
+    pred has-attribute
+    pred0 component
+    pred1 attribute
+    pred1 magnitude
+
+predicate pred-density
+  variables
+    req def component : c-n-ball
+    req attribute : c-density
+  properties  
+    component == attribute.component
+  output
+    template "Component @name.'s @type. is @magnitude.. "
+    name       component.name
+    type       attribute.#TYPE
+    magnitude  attribute.magnitude.#TYPE
+    pred has-attribute
+    pred0 component
+    pred1 attribute
+    pred1 magnitude
+
+predicate pred-distance
+  variables
+    component : c-n-ball
+    def attribute : c-distance
+  properties  
+    component == attribute.component
+  output
+    template "Component @name.'s @type. is @magnitude.. "
+    name       component.name
+    type       attribute.#TYPE
+    magnitude  attribute.magnitude.#TYPE
+    pred has-attribute
+    pred0 component
+    pred1 attribute
+    pred1 magnitude
+
+
+; schema starts here
+
+schema by-attribute(whole: c-full-cloud)
+  ; this works only with GreedyChooser  
+
+  ; first sentence, overall numbers
+  pred-intro(cloud|whole)
+  star
+    pred-size()
+  aggregation-boundary
+  star
+    pred-density()
+  aggregation-boundary
+  star
+    pred-distance()
+    

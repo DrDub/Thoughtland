@@ -1,0 +1,59 @@
+Thoughtland - Describing n-dimensional Objects
+==============================================
+
+Thoughtland is an end-to-end system that produces an English
+text summarizing the error function of a machine learning
+algorithm applied to some training data.
+
+Thoughtland is a four stages pipeline:
+
+* [Cloud] Cloud of points generation via cross-validation
+* [Cluster] Model-based clustering to identify interesting components of the error function 
+* [Analysis] Identify further relation between the key components
+* [Generation] Natural language generation to produce an English text summarizing the error function.
+
+
+Building Thoughtland
+--------------------
+
+Thoughtland uses Maven but you will need to deploy locally some dependencies that haven't made their way into Central
+yet.
+
+They are:
+
+* OpenSchema
+
+git clone git://github.com/DrDub/openschema.git
+(cd openschema; mvn install)
+
+* SimpleNLG
+
+Download http://simplenlg.googlecode.com/files/simplenlg-v44.zip and extract it to some folder
+
+do
+
+mvn install:install-file -Dfile=/path/to/simplenlg/lib/lexAccess2011dist.jar -DgroupId=lexAccess2011dist -DartifactId=lexAccess2011dist -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
+mvn install:install-file -Dfile=/path/to/simplenlg/lib/lvg2011api.jar -DgroupId=lvg2011api -DartifactId=lvg2011api -Dversion=1.0.0 -Dpackaging=jar -DgeneratePom=true
+
+then
+
+git clone git://github.com/DrDub/simplenlg.git
+
+and
+
+mvn install
+
+
+Running Thoughtland
+-------------------
+
+(Look at App.scala)
+
+java -jar target/thoughtland-with-dependencies.jar file:/path/to/thoughtland/source/src/test/resources/net/duboue/thoughtland/cloud/weka/auto-mpg.arff weka.classifiers.functions.MultilayerPerceptron -c 0 -H 3,2
+
+
+Hacking Thoughtland
+-------------------
+
+Take a look at architecture.scala and types.scala. If you want to contribute a new component for any of the four stages, 
+just implement the Traits and send a pull-request.
