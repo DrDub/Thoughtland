@@ -25,13 +25,13 @@ package net.duboue.thoughtland
 object RelativeMagnitude extends Enumeration {
   type RelativeMagnitude = RelativeMagnitudeVal
 
-  case class RelativeMagnitudeVal(name: String) extends Val(name);
+  case class RelativeMagnitudeVal(name: String, typeStr: String) extends Val(name);
 
-  val VeryBig = RelativeMagnitudeVal("VeryBig")
-  val Big = RelativeMagnitudeVal("Big")
-  val Medium = RelativeMagnitudeVal("Medium")
-  val Small = RelativeMagnitudeVal("Small")
-  val VerySmall = RelativeMagnitudeVal("verySmall")
+  val VeryBig = RelativeMagnitudeVal("VeryBig", "c-magnitude-very-big")
+  val Big = RelativeMagnitudeVal("Big", "c-magnitude-big")
+  val Medium = RelativeMagnitudeVal("Medium", "c-magnitude-medium")
+  val Small = RelativeMagnitudeVal("Small", "c-magnitude-small")
+  val VerySmall = RelativeMagnitudeVal("verySmall", "c-magnitude-very-small")
 
   implicit def valueToRelativeMagnitude(v: Value): RelativeMagnitudeVal = v.asInstanceOf[RelativeMagnitudeVal]
 }
