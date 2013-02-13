@@ -29,23 +29,9 @@ import net.duboue.thoughtland.Generator
 import net.duboue.thoughtland.Paragraph
 import net.duboue.thoughtland.Sentence
 import net.duboue.thoughtland.RelativeMagnitude
+import net.duboue.thoughtland.nlg.BasicVerbalizations
 
-class TemplateGenerator extends Generator {
-
-  def numToStr(i: Int): String = i match {
-    case 0 => "zero"
-    case 1 => "one"
-    case 2 => "two"
-    case 3 => "three"
-    case 4 => "four"
-    case 5 => "five"
-    case 6 => "six"
-    case 7 => "seven"
-    case 8 => "eight"
-    case 9 => "nine"
-    case 10 => "ten"
-    case _ => i.toString
-  }
+class TemplateGenerator extends Generator with BasicVerbalizations {
 
   def thereAre(these: Int, ofThat: String): Sentence =
     Sentence(these match {
@@ -60,30 +46,9 @@ class TemplateGenerator extends Generator {
   def findingToSentence(finding: Finding) = Sentence(
     finding match {
 
-      case ComponentDensity(c, d) =>
-        s"Component ${numToStr(c)} is " + (d match {
-          case RelativeMagnitude.VeryBig => "very dense"
-          case RelativeMagnitude.Big => "dense"
-          case RelativeMagnitude.Medium => "somewhat dense"
-          case RelativeMagnitude.Small => "sparse"
-          case RelativeMagnitude.VerySmall => "very sparse"
-        })
-      case ComponentSize(c, d) =>
-        s"Component ${numToStr(c)} is " + (d match {
-          case RelativeMagnitude.VeryBig => "giant"
-          case RelativeMagnitude.Big => "big"
-          case RelativeMagnitude.Medium => "normal size"
-          case RelativeMagnitude.Small => "small"
-          case RelativeMagnitude.VerySmall => "tiny"
-        })
-      case ComponentDistance(c1, c2, d) =>
-        s"Component ${numToStr(c1)} is " + (d match {
-          case RelativeMagnitude.VeryBig => "very far from"
-          case RelativeMagnitude.Big => "far from"
-          case RelativeMagnitude.Medium => "at a good distance from"
-          case RelativeMagnitude.Small => "close to"
-          case RelativeMagnitude.VerySmall => "very close to"
-        }) + s" Component ${numToStr(c2)}"
+      case ComponentDensity(c, d) => s"Component ${numToStr(c)} is " + densityToStr(d)
+      case ComponentSize(c, d) => s"Component ${numToStr(c)} is " + sizeToStr(d)
+      case ComponentDistance(c1, c2, d) => s"Component ${numToStr(c1)} is " + distanceToStr(d) + s" Component ${numToStr(c2)}"
     })
 
   def apply(analysis: Analysis)(implicit env: Environment): GeneratedText =
