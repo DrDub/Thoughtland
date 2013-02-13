@@ -3,7 +3,7 @@ predicate pred-intro
     req def cloud : c-full-cloud 
   properties  
   output
-    template "There are @components. components and @dimensions. dimensions. "
+    template "There are @components. components and @dimensions. dimensions"
     components    cloud.components
     dimensions    cloud.dimensions
     ; preds
@@ -24,7 +24,7 @@ predicate pred-component
   properties  
     component == cloud.component
   output
-    template "There is a component @name.. "
+    template "There is a component @name."
     name       component.name
     pred c-conjunction
     0
@@ -43,7 +43,7 @@ predicate pred-attribute
   properties  
     component == attribute.component
   output
-    template "Component @name.'s @type. is @magnitude.. "
+    template "Component @name.'s @type. is @magnitude."
     name       component.name
     type       attribute.#TYPE
     magnitude  attribute.magnitude.#TYPE

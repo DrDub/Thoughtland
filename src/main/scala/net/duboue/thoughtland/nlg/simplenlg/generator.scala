@@ -69,7 +69,11 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
 
       def add(key: String, value: Object): Unit = map += key -> (map.get(key).getOrElse(List()) ++ List(value));
       def containsKey(key: String): Boolean = if (key.equals("#ID") || key.equals("#TYPE")) true else map.containsKey(key);
-      def get(key: String): java.util.List[Object] = map(key)
+      def get(key: String): java.util.List[Object] = key match {
+        case "#ID" => List(id)
+        case "#TYPE" => List(_type)
+        case _ => map(key)
+      }
       def getID(): String = id;
       def getType(): Object = _type;
       def keySet(): java.util.Set[String] = map.keySet
@@ -95,9 +99,13 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
       def setType(x$1: Any): Unit = throw new UnsupportedOperationException();
     }
 
+    var frameCounter = 1;
     val allFrames: List[Frame] = List(makeCloudFrame(analysis.numberOfDimensions, analysis.numberOfComponents)) ++
       (1.to(analysis.numberOfDimensions).map(makeComponent(_, analysis.findings)) ++
         analysis.findings.filter(_.isInstanceOf[ComponentDistance]).map(makeDistance(_)))./:(List[Frame]())(_ ++ _);
+
+    System.out.println(allFrames)
+
     val nameToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
 
     allFrames.foreach {
@@ -128,7 +136,6 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
           m += "component" -> (1.to(numberOfComponents).map { i => FrameRef(s"component-$i") }).toList
       }
 
-    var frameCounter = 1;
     def makeComponent(component: Int, findings: List[Finding]): List[Frame] = {
       var rest: List[Frame] = List()
       val first = MyFrame(s"component-$component", "c-n-ball").set {
@@ -143,6 +150,7 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
                 m += "component" -> List(FrameRef(s"component-$component"))
                 m += "magnitude" -> List(magnitudeFrame)
             }
+            frameCounter += 1
             rest = rest ++ List(attributeFrame)
             attributeFrame
           }
@@ -175,17 +183,20 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
 
     def makeDistance(f: Finding): List[Frame] = f match {
       case ComponentDistance(c1, c2, d) =>
+        val component1 = c1 + 1
+        val component2 = c2 + 1
         val magnitudeFrame = MyFrame(s"magnitude-$frameCounter", d.typeStr)
         frameCounter += 1
         val attributeFrame = MyFrame(s"distance-$frameCounter", s"c-distance").set {
           m =>
-            m += "component" -> List(FrameRef(s"component-$c1"), FrameRef(s"component-$c2"))
+            m += "component" -> List(FrameRef(s"component-$component1"), FrameRef(s"component-$component2"))
             m += "magnitude" -> List(magnitudeFrame)
         }
+        frameCounter += 1
         List(attributeFrame, magnitudeFrame)
     }
 
-    def getFrame(name: String): net.sf.openschema.Frame = nameToFrame(name)
+    def getFrame(name: String): net.sf.openschema.Frame = nameToFrame.get(name).getOrElse(null)
     def getFrames(): java.util.Collection[net.sf.openschema.Frame] = allFrames
   }
 
@@ -195,13 +206,13 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
         var clauses: List[java.util.Map[String, Object]] = List();
         for (aggr <- aggrSegments)
           clauses = clauses ++ aggr;
-        Paragraph(clauses.filter { !_.containsKey("template") }.map {
+        Paragraph(clauses.filter { _.containsKey("template") }.map {
           clause =>
             val template = clause.get("template").toString();
             val instantiated = new StringBuffer();
             val fields = template.split("\\@");
             instantiated.append((if (fields(0).startsWith("\"")) fields(0).substring(1) else fields(0)));
-            for (i <- 1.to(fields.length)) {
+            for (i <- 1.to(fields.length - 1)) {
               val nameRest = fields(i).split("\\.", 2);
               if (clause.containsKey(nameRest(0)) && clause.get(nameRest(0)) != null) {
                 val value = clause.get(nameRest(0)).toString();

@@ -24,7 +24,7 @@ import net.duboue.thoughtland.analysis.AnalyzerFactory
 import net.duboue.thoughtland.nlg.GeneratorFactory
 
 object ThoughtlandDriver {
-  val default = Seq("wekaerror", "mahout", "basic", "template")
+  val default = Seq("wekaerror", "mahout", "basic", "simplenlg")
   def apply(components: String*): Thoughtland = components match {
     case Seq("default") => apply(default: _*)
     case Seq(clouder, clusterer, analyzer, generator) =>
