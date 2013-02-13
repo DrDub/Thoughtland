@@ -41,8 +41,9 @@ import java.io.InputStream
 import net.sf.openschema.DocumentPlan
 import scala.collection.JavaConversions._
 import net.sf.openschema.Frame
+import net.duboue.thoughtland.nlg.BasicVerbalizations
 
-class SimpleNlgGenerator extends Generator {
+class SimpleNlgGenerator extends Generator with BasicVerbalizations {
 
   val ontology = new RDFOntology(classOf[SimpleNlgGenerator].getResourceAsStream("ontology.rdfs"),
     "classpath://net/duboue/thoughtland/nlg/simplenlg/ontology.rdfs");
@@ -62,9 +63,130 @@ class SimpleNlgGenerator extends Generator {
   }
 
   protected def analysisToFrameSet(analysis: Analysis): FrameSet = new FrameSet() {
-    //TODO
-    def getFrame(x$1: String): net.sf.openschema.Frame = null
-    def getFrames(): java.util.Collection[net.sf.openschema.Frame] = null
+
+    case class MyFrame(id: String, _type: String) extends Frame {
+      val map: collection.mutable.Map[String, List[Object]] = new collection.mutable.HashMap[String, List[Object]]();
+
+      def add(key: String, value: Object): Unit = map += key -> (map.get(key).getOrElse(List()) ++ List(value));
+      def containsKey(key: String): Boolean = if (key.equals("#ID") || key.equals("#TYPE")) true else map.containsKey(key);
+      def get(key: String): java.util.List[Object] = map(key)
+      def getID(): String = id;
+      def getType(): Object = _type;
+      def keySet(): java.util.Set[String] = map.keySet
+      def set(key: String, vals: java.util.List[Object]): Unit = map += key -> vals.toList;
+      def set(key: String, value: Object): Unit = map += key -> List(value);
+      def setID(x$1: String): Unit = throw new UnsupportedOperationException();
+      def setType(x$1: Any): Unit = throw new UnsupportedOperationException();
+
+      def set(f: (collection.mutable.Map[String, List[Object]]) => Unit): MyFrame =
+        { f(map); this }
+    }
+
+    case class FrameRef(id: String) extends Frame {
+      def add(key: String, value: Object): Unit = throw new UnsupportedOperationException();
+      def containsKey(key: String): Boolean = throw new UnsupportedOperationException();
+      def get(key: String): java.util.List[Object] = throw new UnsupportedOperationException();
+      def getID(): String = id;
+      def getType(): Object = throw new UnsupportedOperationException();
+      def keySet(): java.util.Set[String] = throw new UnsupportedOperationException();
+      def set(key: String, vals: java.util.List[Object]): Unit = throw new UnsupportedOperationException();
+      def set(key: String, value: Object): Unit = throw new UnsupportedOperationException();
+      def setID(x$1: String): Unit = throw new UnsupportedOperationException();
+      def setType(x$1: Any): Unit = throw new UnsupportedOperationException();
+    }
+
+    val allFrames: List[Frame] = List(makeCloudFrame(analysis.numberOfDimensions, analysis.numberOfComponents)) ++
+      (1.to(analysis.numberOfDimensions).map(makeComponent(_, analysis.findings)) ++
+        analysis.findings.filter(_.isInstanceOf[ComponentDistance]).map(makeDistance(_)))./:(List[Frame]())(_ ++ _);
+    val nameToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
+
+    allFrames.foreach {
+      frame =>
+        frame match {
+          case myframe: MyFrame => {
+
+            val keys = frame.keySet().toList
+            keys.foreach {
+              key =>
+                myframe.map += key -> myframe.map(key).map {
+                  obj =>
+                    obj match {
+                      case FrameRef(name) => nameToFrame(name)
+                      case other => other
+                    }
+                }
+            }
+          }
+        }
+    }
+
+    def makeCloudFrame(numberOfDimensions: Int, numberOfComponents: Int): Frame =
+      MyFrame("full-cloud", "c-full-cloud").set {
+        m =>
+          m += "components" -> List[Object](numberOfComponents.asInstanceOf[Object]);
+          m += "dimensions" -> List[Object](numberOfDimensions.asInstanceOf[Object]);
+          m += "component" -> (1.to(numberOfComponents).map { i => FrameRef(s"component-$i") }).toList
+      }
+
+    var frameCounter = 1;
+    def makeComponent(component: Int, findings: List[Finding]): List[Frame] = {
+      var rest: List[Frame] = List()
+      val first = MyFrame(s"component-$component", "c-n-ball").set {
+        m =>
+          m += "name" -> List(numToStr(component));
+          def makeAttribute(typeName: String, magnitude: RelativeMagnitude.RelativeMagnitude): Frame = {
+            val magnitudeFrame = MyFrame(s"magnitude-$frameCounter", magnitude.typeStr)
+            rest = rest ++ List(magnitudeFrame)
+            frameCounter += 1
+            val attributeFrame = MyFrame(s"$typeName-$frameCounter", s"c-$typeName").set {
+              m =>
+                m += "component" -> List(FrameRef(s"component-$component"))
+                m += "magnitude" -> List(magnitudeFrame)
+            }
+            rest = rest ++ List(attributeFrame)
+            attributeFrame
+          }
+
+          findings.filter({ f =>
+            f match {
+              case ComponentSize(c, _) => c == component;
+              case _ => false
+            }
+          }).foreach({
+            f =>
+              f match {
+                case ComponentSize(_, s) => m += "size" -> List(makeAttribute("size", s))
+              }
+          })
+          findings.filter({ f =>
+            f match {
+              case ComponentDensity(c, _) => c == component;
+              case _ => false
+            }
+          }).foreach({
+            f =>
+              f match {
+                case ComponentDensity(_, d) => m += "density" -> List(makeAttribute("density", d))
+              }
+          })
+      }
+      List(first) ++ rest
+    }
+
+    def makeDistance(f: Finding): List[Frame] = f match {
+      case ComponentDistance(c1, c2, d) =>
+        val magnitudeFrame = MyFrame(s"magnitude-$frameCounter", d.typeStr)
+        frameCounter += 1
+        val attributeFrame = MyFrame(s"distance-$frameCounter", s"c-distance").set {
+          m =>
+            m += "component" -> List(FrameRef(s"component-$c1"), FrameRef(s"component-$c2"))
+            m += "magnitude" -> List(magnitudeFrame)
+        }
+        List(attributeFrame, magnitudeFrame)
+    }
+
+    def getFrame(name: String): net.sf.openschema.Frame = nameToFrame(name)
+    def getFrames(): java.util.Collection[net.sf.openschema.Frame] = allFrames
   }
 
   protected def verbalize(plan: DocumentPlan): GeneratedText =
