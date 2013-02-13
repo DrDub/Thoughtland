@@ -51,7 +51,7 @@ import org.apache.mahout.common.RandomUtils
 class MahoutClusterer extends Clusterer {
   def apply(cloud: CloudPoints, numIter: Int)(implicit env: Environment): Components = {
     RandomUtils.useTestSeed()
-    
+
     // turn the numbers into vectors
     val vectors = cloud.points.map { d => new DenseVector(d, true) }
 

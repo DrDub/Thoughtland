@@ -28,14 +28,12 @@ import weka.classifiers.functions.MultilayerPerceptron;
 import weka.classifiers.functions.neural.NeuralConnection;
 import weka.classifiers.functions.neural.NeuralNode;
 
-public class MultilayerPerceptronExtractor extends
-		WekaClassifierExtractor<MultilayerPerceptron> {
+public class MultilayerPerceptronExtractor extends WekaClassifierExtractor<MultilayerPerceptron> {
 
 	private Field neuralNodes;
 
 	public MultilayerPerceptronExtractor() {
-		this.neuralNodes = super.pinpoint(MultilayerPerceptron.class,
-				"m_neuralNodes");
+		this.neuralNodes = super.pinpoint(MultilayerPerceptron.class, "m_neuralNodes");
 	}
 
 	@Override
