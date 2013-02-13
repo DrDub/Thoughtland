@@ -71,7 +71,7 @@ class MahoutClusterer extends Clusterer {
       i += 1
     }
     writer.close();
-    System.out.println("Wrote")
+//    System.out.println("Wrote")
 
     def cluster(output: Path, iter: Int, numCluster: Int) =
       DirichletDriver.run(conf, seqFile, output,
@@ -86,9 +86,9 @@ class MahoutClusterer extends Clusterer {
     val mainIter = numIter / 10
 
     cluster(outputDir0, mainIter, 1)
-    System.out.println("Main")
+//    System.out.println("Main")
     cluster(outputDir, numIter, 20)
-    System.out.println("Cluster")
+//    System.out.println("Cluster")
 
     def clusterToComponent(gaussian: GaussianCluster): Component = {
       implicit def vectorElemToDouble(v: Vector): Array[Double] =
@@ -106,10 +106,10 @@ class MahoutClusterer extends Clusterer {
         record.getSecond().getValue().asInstanceOf[GaussianCluster]
     } filter { gaussian => gaussian.getNumObservations() > 0 } map clusterToComponent
 
-    System.out.println(parts.size)
-    System.out.println(parts)
-    for (component <- parts)
-      System.out.println(component.center.mkString("", ", ", ""))
+//    System.out.println(parts.size)
+//    System.out.println(parts)
+//    for (component <- parts)
+//      System.out.println(component.center.mkString("", ", ", ""))
 
     Components(mainComponent, parts.toList)
   }

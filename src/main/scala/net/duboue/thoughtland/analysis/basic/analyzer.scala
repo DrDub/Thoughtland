@@ -42,7 +42,7 @@ class BasicAnalyzer extends ComponentAnalyzer {
   def gamma(x: Double): Double = Math.exp(logGamma(x))
 
   def apply(clusters: Components)(implicit env: Environment): Analysis = {
-    System.out.println("Analyzer starting")
+//    System.out.println("Analyzer starting")
 
     val numComponents = clusters.parts.length
     val n = clusters.main.center.length
@@ -59,7 +59,7 @@ class BasicAnalyzer extends ComponentAnalyzer {
     val findings = new scala.collection.mutable.ArrayBuffer[Finding]
 
     for (i <- 0.to(numComponents - 1)) {
-      System.out.println(s"Analyzing component $i")
+//      System.out.println(s"Analyzing component $i")
 
       val component = clusters.parts(i)
       val covered = component.coveredPoints
@@ -75,7 +75,7 @@ class BasicAnalyzer extends ComponentAnalyzer {
       else if (volume < fullVolume / 50)
         findings += ComponentSize(i, Small)
 
-      System.out.println(s"vol: $volume $fullVolume")
+//      System.out.println(s"vol: $volume $fullVolume")
 
       val density = covered / volume
       if (density > 10 * mainDensity)
@@ -85,7 +85,7 @@ class BasicAnalyzer extends ComponentAnalyzer {
       else if (density < mainDensity / 2)
         findings += ComponentDensity(i, Small)
 
-      System.out.println(s"den: $density $mainDensity")
+//      System.out.println(s"den: $density $mainDensity")
 
       for (j <- (i + 1).to(numComponents - 1)) {
         val other = clusters.parts(j)
@@ -108,7 +108,7 @@ class BasicAnalyzer extends ComponentAnalyzer {
           findings += ComponentDistance(i, j, Small)
       }
     }
-    System.out.println("Done analysis")
+//    System.out.println("Done analysis")
 
     Analysis(numComponents, n, findings.toList)
   }

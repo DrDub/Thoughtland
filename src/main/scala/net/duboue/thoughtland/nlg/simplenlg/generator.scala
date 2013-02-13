@@ -104,7 +104,7 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
       (1.to(analysis.numberOfDimensions).map(makeComponent(_, analysis.findings)) ++
         analysis.findings.filter(_.isInstanceOf[ComponentDistance]).map(makeDistance(_)))./:(List[Frame]())(_ ++ _);
 
-    System.out.println(allFrames)
+//    System.out.println(allFrames)
 
     val nameToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
 
@@ -203,6 +203,18 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
   protected def verbalize(plan: DocumentPlan): GeneratedText =
     new GeneratedText(plan.getParagraphs().map {
       aggrSegments =>
+        //TODO verbalize with simplenlg
+        /*
+         
+         Logic goes as follows:
+         * if all entries in aggregation set have the same attribute, order them by attribute
+         * proceed to join them and generate
+         
+         * if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
+         
+         */
+        
+        
         var clauses: List[java.util.Map[String, Object]] = List();
         for (aggr <- aggrSegments)
           clauses = clauses ++ aggr;

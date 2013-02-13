@@ -60,7 +60,7 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
     } else instances.numAttributes() - 1
     instances.setClassIndex(classIdx)
 
-    System.out.println(params.toList)
+    //System.out.println(params.toList)
 
     // do the leave-one-out in parallel
     case class WekaResults(points: Array[Double], expected: Double, returned: Double)
@@ -89,7 +89,7 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
             results(idx) = WekaResults(extract(classifier, evalInstance, evalInstance.classValue(), classified),
               evalInstance.classValue(), classified)
             val left = leftOverTasks.decrementAndGet()
-            System.out.println("Done " + idx + " left " + left)
+//            System.out.println("Done " + idx + " left " + left)
             if (left == 0)
               lock.synchronized {
                 lock.notifyAll()
