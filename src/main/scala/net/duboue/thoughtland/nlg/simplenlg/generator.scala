@@ -42,6 +42,14 @@ import net.sf.openschema.DocumentPlan
 import scala.collection.JavaConversions._
 import net.sf.openschema.Frame
 import net.duboue.thoughtland.nlg.BasicVerbalizations
+import simplenlg.realiser.english.Realiser
+import simplenlg.lexicon.Lexicon
+import simplenlg.framework.NLGFactory
+import simplenlg.framework.CoordinatedPhraseElement
+import simplenlg.features.Feature
+import simplenlg.features.NumberAgreement
+import simplenlg.phrasespec.NPPhraseSpec
+import net.duboue.thoughtland.GeneratedText
 
 class SimpleNlgGenerator extends Generator with BasicVerbalizations {
 
@@ -51,18 +59,22 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
   val byComponentSchema = new OpenSchemaPlanner(new InputSource(new SchemaToXmlFilterStream(classOf[SimpleNlgGenerator].getResourceAsStream("by-component.schema"))), new SimpleFocusChooser(ontology));
   val byAttributeSchema = new OpenSchemaPlanner(new InputSource(new SchemaToXmlFilterStream(classOf[SimpleNlgGenerator].getResourceAsStream("by-attribute.schema"))), new GreedyChooser());
 
+  val lexicon = Lexicon.getDefaultLexicon();
+  val nlgFactory = new NLGFactory(lexicon);
+  val realiser = new Realiser(lexicon);
+
   def apply(analysis: Analysis)(implicit env: Environment): GeneratedText = {
     val frames = analysisToFrameSet(analysis);
     val texts = List(byComponentSchema, byAttributeSchema)
       .map { _.instantiate(frames, new java.util.HashMap(), ontology) }
-      .map(verbalize);
-    if (texts(0).toString.length < texts(1).toString.length)
+      .map(verbalize(frames, _));
+    if (false) // TODO texts(0).toString.length < texts(1).toString.length)
       return texts(0)
     else
       return texts(1)
   }
 
-  protected def analysisToFrameSet(analysis: Analysis): FrameSet = new FrameSet() {
+  def analysisToFrameSet(analysis: Analysis): FrameSet = new FrameSet() {
 
     case class MyFrame(id: String, _type: String) extends Frame {
       val map: collection.mutable.Map[String, List[Object]] = new collection.mutable.HashMap[String, List[Object]]();
@@ -104,7 +116,7 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
       (1.to(analysis.numberOfDimensions).map(makeComponent(_, analysis.findings)) ++
         analysis.findings.filter(_.isInstanceOf[ComponentDistance]).map(makeDistance(_)))./:(List[Frame]())(_ ++ _);
 
-//    System.out.println(allFrames)
+    //    System.out.println(allFrames)
 
     val nameToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
 
@@ -199,44 +211,130 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
     def getFrame(name: String): net.sf.openschema.Frame = nameToFrame.get(name).getOrElse(null)
     def getFrames(): java.util.Collection[net.sf.openschema.Frame] = allFrames
   }
+  def verbalize(frames: FrameSet, plan: DocumentPlan): GeneratedText = {
+//    System.err.println(plan)
+    // helper functions
+    def getFrame(fd: java.util.Map[String, Object], key: String): Frame = {
+      fd.get(key) match {
+        case s: String => if (fd.containsKey(s))
+          getFrame(fd, s)
+        else
+          frames.getFrame(s)
+        case m: java.util.Map[String, Object] =>
+          frames.getFrame(m.get("object-id").toString)
+      }
+    }
+    def getVariable(fd: java.util.Map[String, Object], key: String): String =
+      fd(fd(key).toString).toString;
+    def getVariable2(fd: java.util.Map[String, Object], key: String, subKey: String): String =
+      fd(fd(key).asInstanceOf[java.util.Map[String, Object]].get(subKey).toString).toString;
+    def typeStrToMagnitude(s: String) = RelativeMagnitude.values.filter(v => v.typeStr.equals(s)).head
+    def verbalizeMagnitude(m: RelativeMagnitude.RelativeMagnitude)(implicit _type: String) = _type match {
+      case "c-size" => sizeToStr(m)
+      case "c-density" => densityToStr(m)
+    }
+    def templateClause(clause: java.util.Map[String, Object]): Sentence = {
+      val template = clause.get("template").toString();
+      val instantiated = new StringBuffer();
+      val fields = template.split("\\@");
+      instantiated.append((if (fields(0).startsWith("\"")) fields(0).substring(1) else fields(0)));
+      for (i <- 1.to(fields.length - 1)) {
+        val nameRest = fields(i).split("\\.", 2);
+        if (clause.containsKey(nameRest(0)) && clause.get(nameRest(0)) != null) {
+          val value = clause.get(nameRest(0)).toString();
+          instantiated.append(if (value.startsWith("\"")) value.substring(1, value.length() - 1) else value);
+        }
+        instantiated.append(if (i == fields.length - 1 && nameRest(1).endsWith("\"")) nameRest(1).substring(0,
+          nameRest(1).length() - 1)
+        else nameRest(1));
+      }
+      instantiated.append(".")
+      Sentence(instantiated.toString())
+    }
+    def templateClauses(clauses: java.util.List[java.util.Map[String, Object]]): List[Sentence] =
+      clauses.filter { _.containsKey("template") }.map(templateClause).toList
 
-  protected def verbalize(plan: DocumentPlan): GeneratedText =
     new GeneratedText(plan.getParagraphs().map {
-      aggrSegments =>
-        //TODO verbalize with simplenlg
-        /*
-         
-         Logic goes as follows:
-         * if all entries in aggregation set have the same attribute, order them by attribute
-         * proceed to join them and generate
-         
-         * if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
-         
-         */
-        
-        
-        var clauses: List[java.util.Map[String, Object]] = List();
-        for (aggr <- aggrSegments)
-          clauses = clauses ++ aggr;
-        Paragraph(clauses.filter { _.containsKey("template") }.map {
-          clause =>
-            val template = clause.get("template").toString();
-            val instantiated = new StringBuffer();
-            val fields = template.split("\\@");
-            instantiated.append((if (fields(0).startsWith("\"")) fields(0).substring(1) else fields(0)));
-            for (i <- 1.to(fields.length - 1)) {
-              val nameRest = fields(i).split("\\.", 2);
-              if (clause.containsKey(nameRest(0)) && clause.get(nameRest(0)) != null) {
-                val value = clause.get(nameRest(0)).toString();
-                instantiated.append(if (value.startsWith("\"")) value.substring(1, value.length() - 1) else value);
-              }
-              instantiated.append(if (i == fields.length - 1 && nameRest(1).endsWith("\"")) nameRest(1).substring(0,
-                nameRest(1).length() - 1)
-              else nameRest(1));
-            }
+      para =>
+        Paragraph(para.map {
+          aggrSegment =>
 
-            Sentence(instantiated.toString())
-        })
+            // introductory sentence
+            if (aggrSegment.size() == 1 && aggrSegment.get(0).get("pred").equals("c-conjunction")) {
+              val fd = aggrSegment.get(0)
+              val p = nlgFactory.createClause();
+              p.setSubject("there");
+              p.getSubject().setFeature("expletive_subject", false);
+              //              p.getObject().setFeature(Feature.RAISE_SPECIFIER, true)
+              p.setVerb("be");
+              p.getVerbPhrase().setRealisation("are");
+              //              p.setFeature(Feature.PASSIVE, true)
+              p.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+              p.getVerb().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+              p.getVerbPhrase().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+              val phrCom = nlgFactory.createNounPhrase("component");
+              val numCom = Integer.parseInt(getVariable2(fd, "0", "pred1"));
+              phrCom.setSpecifier(numToStr(numCom));
+              if (numCom > 1)
+                phrCom.setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+              val phrDim = nlgFactory.createNounPhrase("dimension");
+              val numDim = Integer.parseInt(getVariable2(fd, "1", "pred1"));
+              phrDim.setSpecifier(numToStr(numDim));
+              phrDim.setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+
+              p.setObject(new CoordinatedPhraseElement(phrCom, phrDim));
+              //              realiser.setDebugMode(true)
+              List(Sentence(realiser.realiseSentence(p)))
+            } else // if all entries in aggregation set have the same attribute
+            if (aggrSegment.forall(clause => clause.get("pred").equals("has-attribute"))) {
+              implicit val _type = getFrame(aggrSegment.get(0), "pred1").getType.toString
+              if (_type.equals("c-distance")) {
+                // distances are completely different animal
+                //TODO
+                templateClauses(aggrSegment)
+              } else {
+                // order them by magnitude value
+                val sorted = aggrSegment.sortBy[String](clause => getVariable(clause, "pred2"));
+                val c = nlgFactory.createCoordinatedPhrase();
+                var current: Pair[List[NPPhraseSpec], RelativeMagnitude.RelativeMagnitude] = null;
+                def addToPhrase() = if (current != null) {
+                  c.addCoordinate(
+                    nlgFactory.createClause(
+                      if (current._1.size > 1) {
+                        val cc = new CoordinatedPhraseElement()
+                        current._1.foreach(cc.addCoordinate(_))
+                        cc
+                      } else
+                        current._1(0),
+                      "be", verbalizeMagnitude(current._2)))
+                }
+                sorted.foreach {
+                  clause =>
+                    val np = nlgFactory.createNounPhrase("component " +
+                      getFrame(clause, "pred0").get("name").head.toString)
+                    val magnitude = typeStrToMagnitude(getVariable(clause, "pred2"))
+                    if (current == null)
+                      current = Pair(List(np), magnitude)
+                    else if (magnitude == current._2)
+                      current = Pair(current._1 ++ List(np), current._2)
+                    else {
+                      addToPhrase
+                      current = Pair(List(np), magnitude)
+                    }
+                }
+                addToPhrase()
+
+                List(Sentence(realiser.realiseSentence(c)))
+              }
+
+              //TODO all about the same component
+              //TODO if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
+            } else
+              // unknown, go template route
+              templateClauses(aggrSegment)
+
+        }./:(List[Sentence]())(_ ++ _))
     }.toList)
+  }
 }
 

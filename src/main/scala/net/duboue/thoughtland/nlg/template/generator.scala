@@ -35,8 +35,8 @@ class TemplateGenerator extends Generator with BasicVerbalizations {
 
   def thereAre(these: Int, ofThat: String): Sentence =
     Sentence(these match {
-      case 1 => s"There is one $ofThat"
-      case x => s"There are ${numToStr(x)} ${ofThat}s"
+      case 1 => s"There is one $ofThat."
+      case x => s"There are ${numToStr(x)} ${ofThat}s."
     })
 
   def firstParagraph(analysis: Analysis): Paragraph =
@@ -45,10 +45,9 @@ class TemplateGenerator extends Generator with BasicVerbalizations {
 
   def findingToSentence(finding: Finding) = Sentence(
     finding match {
-
-      case ComponentDensity(c, d) => s"Component ${numToStr(c)} is " + densityToStr(d)
-      case ComponentSize(c, d) => s"Component ${numToStr(c)} is " + sizeToStr(d)
-      case ComponentDistance(c1, c2, d) => s"Component ${numToStr(c1)} is " + distanceToStr(d) + s" Component ${numToStr(c2)}"
+      case ComponentDensity(c, d) => s"Component ${numToStr(c)} is ${densityToStr(d)}."
+      case ComponentSize(c, d) => s"Component ${numToStr(c)} is ${sizeToStr(d)}."
+      case ComponentDistance(c1, c2, d) => s"Component ${numToStr(c1)} is ${distanceToStr(d)} Component ${numToStr(c2)}."
     })
 
   def apply(analysis: Analysis)(implicit env: Environment): GeneratedText =

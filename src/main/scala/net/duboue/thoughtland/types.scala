@@ -38,7 +38,7 @@ case class GeneratedText(paras: List[Paragraph]) {
   override def toString = paras.mkString("", "\n", "\n")
 }
 case class Paragraph(sent: List[Sentence]) {
-  override def toString = sent.mkString("", ". ", ".")
+  override def toString = sent.mkString("", " ", "")
 }
 case class Sentence(text: String) {
   override def toString = text

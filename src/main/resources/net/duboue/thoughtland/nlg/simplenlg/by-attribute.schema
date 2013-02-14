@@ -17,42 +17,20 @@ predicate pred-intro
       pred0 cloud
       pred1 dimensions
 
-predicate pred-component
-  variables
-    req cloud : c-full-cloud
-    def component : c-n-ball
-  properties  
-    component == cloud.component
-  output
-    template "There is a component @name."
-    name       component.name
-    pred c-conjunction
-    0
-      pred has-component
-      pred0 cloud
-      pred1 component
-    1
-      pred attributive
-      pred0 component
-      pred1 name
-
 predicate pred-size
   variables
-    req def component : c-n-ball
-    req attribute : c-size
-    def magnitude : c-magnitude
+    req component : c-n-ball
+    def req attribute : c-size
   properties  
     component == attribute.component
-    magnitude == attribute.magnitude
   output
-    template "Component @name.'s @type. is @magnitude-type."
+    template "Component @name.'s size is @magnitude."
     name       component.name
-    type       attribute.#TYPE
-    magnitude-type  magnitude.#TYPE
+    magnitude  attribute.magnitude.#TYPE
     pred has-attribute
     pred0 component
     pred1 attribute
-    pred1 magnitude
+    pred2 magnitude
 
 predicate pred-density
   variables
@@ -61,14 +39,13 @@ predicate pred-density
   properties  
     component == attribute.component
   output
-    template "Component @name.'s @type. is @magnitude."
+    template "Component @name.'s density is @magnitude."
     name       component.name
-    type       attribute.#TYPE
     magnitude  attribute.magnitude.#TYPE
     pred has-attribute
     pred0 component
     pred1 attribute
-    pred1 magnitude
+    pred2 magnitude
 
 predicate pred-distance
   variables
@@ -77,14 +54,13 @@ predicate pred-distance
   properties  
     component == attribute.component
   output
-    template "Component @name.'s @type. is @magnitude."
+    template "Component @name.'s distance is @magnitude."
     name       component.name
-    type       attribute.#TYPE
     magnitude  attribute.magnitude.#TYPE
     pred has-attribute
     pred0 component
     pred1 attribute
-    pred1 magnitude
+    pred2 magnitude
 
 
 ; schema starts here
@@ -94,6 +70,7 @@ schema by-attribute(whole: c-full-cloud)
 
   ; first sentence, overall numbers
   pred-intro(cloud|whole)
+  aggregation-boundary
   star
     pred-size()
   aggregation-boundary

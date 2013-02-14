@@ -60,7 +60,10 @@ schema by-component(whole: c-full-cloud)
 
   ; first sentence, overall numbers
   pred-intro(cloud|whole)
+  aggregation-boundary
   plus ; go
     pred-component(cloud|whole,component|component)
     star
       pred-attribute(component|component)
+    aggregation-boundary
+      
