@@ -159,4 +159,8 @@
 		</repository>
 	</repositories>
 	<url>http://thouhtland.duboue.net</url>
+	<scm>
+		<url>https://github.com/DrDub/Thoughtland</url>
+	</scm>
+	<packaging>war</packaging>
 </project>
