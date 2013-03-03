@@ -34,7 +34,6 @@
 			<artifactId>scala-library</artifactId>
 			<version>${scala.version}</version>
 		</dependency>
-
 		<!-- Test -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -90,6 +89,12 @@
 			<artifactId>openschema</artifactId>
 			<version>0.0.2-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-project</artifactId>
+			<version>9.0.0.RC1</version>
+			<type>pom</type>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -143,7 +148,34 @@
 				</execution> <execution> <id>deploy-external-dependencies</id> <phase>deploy</phase> 
 				<goals> <goal>deploy-external</goal> </goals> </execution> </executions> 
 				</plugin> -->
-		</plugins>
+ <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>net.duboue.thoughtland.Main</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      
+      <!--  redundant and not used with packaging war -->
+          <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>net.duboue.thoughtland.Main</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>		
+      </plugins>
 	</build>
 	<repositories>
 		<repository>
