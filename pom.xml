@@ -95,6 +95,11 @@
 			<version>9.0.0.RC1</version>
 			<type>pom</type>
 		</dependency>
+		<dependency>
+			<groupId>org.scalatra</groupId>
+			<artifactId>scalatra</artifactId>
+			<version>2.2.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -148,22 +153,7 @@
 				</execution> <execution> <id>deploy-external-dependencies</id> <phase>deploy</phase> 
 				<goals> <goal>deploy-external</goal> </goals> </execution> </executions> 
 				</plugin> -->
- <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>2.3</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <mainClass>net.duboue.thoughtland.Main</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-      
-      <!--  redundant and not used with packaging war -->
-          <plugin>
+        <!--  plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
@@ -174,7 +164,20 @@
             </manifest>
           </archive>
         </configuration>
-      </plugin>		
+      </plugin-->
+    <plugin>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <configuration>
+        <archive>
+          <manifest>
+            <mainClass>net.duboue.thoughtland.Main</mainClass>
+          </manifest>
+        </archive>
+        <descriptorRefs>
+          <descriptorRef>jar-with-dependencies</descriptorRef>
+        </descriptorRefs>
+      </configuration>
+    </plugin>      		
       </plugins>
 	</build>
 	<repositories>
@@ -194,5 +197,5 @@
 	<scm>
 		<url>https://github.com/DrDub/Thoughtland</url>
 	</scm>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 </project>

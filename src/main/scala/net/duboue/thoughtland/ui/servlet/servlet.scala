@@ -19,6 +19,7 @@
 package net.duboue.thoughtland.ui.servlet;
 
 import javax.servlet.Servlet
+import java.io.PrintWriter
 
 class ThoughtlandServlet extends Servlet {
 
@@ -34,6 +35,10 @@ class ThoughtlandServlet extends Servlet {
 
   def service(req: javax.servlet.ServletRequest, res: javax.servlet.ServletResponse): Unit = {
     System.out.println(req);
+    res.setContentType("text/plain");
+    val pw = new PrintWriter(res.getWriter());
+    pw.println("Hello world!")
+    pw.close();
   }
   def destroy(): Unit = {
 
