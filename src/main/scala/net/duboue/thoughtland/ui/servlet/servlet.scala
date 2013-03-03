@@ -20,29 +20,12 @@ package net.duboue.thoughtland.ui.servlet;
 
 import javax.servlet.Servlet
 import java.io.PrintWriter
+import org.scalatra.ScalatraServlet
 
-class ThoughtlandServlet extends Servlet {
-
-  var config: javax.servlet.ServletConfig = null
-
-  def init(config: javax.servlet.ServletConfig): Unit = {
-    this.config = config
+class ThoughtlandServlet extends ScalatraServlet {
+  
+  get("/") {
+    <h1>Hello World!</h1>
   }
-
-  def getServletConfig(): javax.servlet.ServletConfig = config
-
-  def getServletInfo(): String = "Thoughtland Servlet"
-
-  def service(req: javax.servlet.ServletRequest, res: javax.servlet.ServletResponse): Unit = {
-    System.out.println(req);
-    res.setContentType("text/plain");
-    val pw = new PrintWriter(res.getWriter());
-    pw.println("Hello world!")
-    pw.close();
-  }
-  def destroy(): Unit = {
-
-  }
-
 }
 

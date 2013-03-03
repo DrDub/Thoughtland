@@ -16,7 +16,7 @@ object Main {
     resource_handler.setWelcomeFiles(("index.html" :: List()).toArray);
     resource_handler.setBaseResource(Resource.newClassPathResource("/net/duboue/thoughtland/ui/servlet/static", true, false));
     val servletHandler = new ServletHandler();
-    servletHandler.addServletWithMapping(classOf[ThoughtlandServlet], "/tl");
+    servletHandler.addServletWithMapping(classOf[ThoughtlandServlet], "/tl/*");
     val handlers = new HandlerList();
     handlers.setHandlers((servletHandler :: resource_handler :: new DefaultHandler() :: List()).toArray);
     server.setHandler(handlers);
