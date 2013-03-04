@@ -22,6 +22,25 @@ import javax.servlet.Servlet
 import java.io.PrintWriter
 import org.scalatra.ScalatraServlet
 import javax.servlet.ServletConfig
+import java.util.Properties
+import java.io.FileReader
+
+object ServletState {
+  val prop = new Properties
+
+  def init(fileName: Option[String]) {
+    if (fileName.nonEmpty) {
+      prop.load(new FileReader(fileName.get));
+    } else {
+      prop.setProperty("admin", "non-set");
+    }
+  }
+
+  def runIds(): Array[Int] = (1 :: List()).toArray // new Array[Int](0)
+  
+  def runDescription(id: Int) = "Unknown"
+
+}
 
 class ThoughtlandServlet extends ScalatraServlet {
 

@@ -47,7 +47,7 @@ mvn install
 Running Thoughtland
 -------------------
 
-(For a command-line, take a look at App.scala)
+(For an example command-line use, take a look at App.scala)
 
 mvn clean compile assembly:single
 
