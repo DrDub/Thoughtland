@@ -21,9 +21,10 @@ package net.duboue.thoughtland.ui.servlet;
 import javax.servlet.Servlet
 import java.io.PrintWriter
 import org.scalatra.ScalatraServlet
+import javax.servlet.ServletConfig
 
 class ThoughtlandServlet extends ScalatraServlet {
-  
+
   get("/") {
     <h1>Hello World!</h1>
   }
