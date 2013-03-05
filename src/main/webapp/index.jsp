@@ -23,7 +23,7 @@ algorithm applied to some training data.</p>
 
 <h2>Submit a Weka ARFF file for analysis</h2>
 
-<form submit="/tl/data" method="POST">
+<form submit="/tl/submission/new" method="POST">
 <p>Submit a Weka ARFF file for analysis (maximum 500k):<br> <input type="file" name="upload_file> </p>
 
 <p>Please note, in a public server everybody will be able to access (and download) your submission (contact the 

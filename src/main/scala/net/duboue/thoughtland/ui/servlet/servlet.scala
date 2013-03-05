@@ -18,64 +18,25 @@
 
 package net.duboue.thoughtland.ui.servlet;
 
-import javax.servlet.Servlet
-import java.io.PrintWriter
-import org.scalatra.ScalatraServlet
-import javax.servlet.ServletConfig
-import java.util.Properties
-import java.io.FileReader
 import java.io.File
+import java.io.FileReader
+import java.nio.charset.Charset
+import java.util.Properties
 
-object ServletState {
-  val prop = new Properties
-  val lock = new Object
+import scala.collection.JavaConversions._
 
-  var maxSize: Int = 0
-
-  def init(fileName: Option[String]) {
-    lock.synchronized {
-      if (fileName.nonEmpty) {
-        prop.load(new FileReader(fileName.get));
-      } else {
-        prop.setProperty("admin", "unknown (admin not set)");
-        prop.setProperty("maxSizeStr", "500k");
-        prop.setProperty("maxSizeBytes", "512000");
-        prop.setProperty("dbDir", "/tmp");
-      }
-      dbDir = new File(prop.getProperty("dbDir"))
-      maxSize = Integer.parseInt(prop.getProperty("maxSizeBytes"))
-      load()
-    }
-  }
-
-  private var dbDir: File = null
-  
-  private val runs: scala.collection.mutable.Buffer[Run] = new scala.collection.mutable.ArrayBuffer[Run]
-  
-  private def load() = lock.synchronized {
-	  //TODO
-  }
-
-  object RunStatus extends Enumeration {
-    type RunStatus = Value
-    val RunError = Value("Error")
-    val RunOngoing = Value("Ongoing")
-    val RunFinished = Value("Finished")
-  }
-
-  case class Run(id: Int, data: File, status: RunStatus.RunStatus) {
-    override def toString = s"Run $id ($status)" 
-  }
-
-  def runIds(): Array[Int] = runs.map { _.id }.toArray
-
-  def runDescription(id: Int) = runs.find { _.id == id }.map { _.toString }.getOrElse("Unknown")
-}
+import org.scalatra.ScalatraServlet
 
 class ThoughtlandServlet extends ScalatraServlet {
 
   get("/") {
     <h1>Hello World!</h1>
+  }
+  
+  post("/submission/new") {
+    //TODO get the POST file
+    //TODO get the owner, comments, extra from GET
+    //TODO ServletState.enqueueRun(...)
   }
 }
 
