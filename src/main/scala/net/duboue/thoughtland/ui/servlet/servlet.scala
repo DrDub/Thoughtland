@@ -34,6 +34,10 @@ class ThoughtlandServlet extends ScalatraServlet {
   }
   
   post("/submission/new") {
+    System.err.println("hola")
+    System.out.println(request.body)
+    System.err.println("hola");
+    <h1>Got it!</h1>
     //TODO get the POST file
     //TODO get the owner, comments, extra from GET
     //TODO ServletState.enqueueRun(...)

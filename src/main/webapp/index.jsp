@@ -23,7 +23,11 @@ algorithm applied to some training data.</p>
 
 <h2>Submit a Weka ARFF file for analysis</h2>
 
-<form submit="/tl/submission/new" method="POST">
+<form action="/tl/submission/new" method="POST" enctype-"multipart/form-data">
+
+<p>Algorithm to use: <input type="text" size="50" name="algo"></input></p>
+<p>Algorithm parameters: <input type="text" size="100" name="params"></input></p>
+
 <p>Submit a Weka ARFF file for analysis (maximum 500k):<br> <input type="file" name="upload_file> </p>
 
 <p>Please note, in a public server everybody will be able to access (and download) your submission (contact the 
@@ -40,6 +44,8 @@ administrator to have the file removed if you submit something by mistake).</p>
 <p>Any private comments to the administrator (for example, say hi):<br>
 <textarea rows="10" cols="80" name="private"></textarea>
 </p>
+
+<p><input type="submit"></p>
 
 <h2>Past submissions</h2>
 
