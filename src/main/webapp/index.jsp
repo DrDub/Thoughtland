@@ -3,8 +3,11 @@
 <head>
 <title>Thoughtland</title>
 </head>
-<body>
-<h1><img src="images/fl.png">Thoughtland</h1>
+<body background="images/wall4.png">
+<h1><img src="images/fl.png">Thoughtland<br>
+<a href="http://en.wikisource.org/wiki/Flatland_(second_edition)/Section_22"><small><i>I spoke not of a physical Dimension, but of a Thoughtland whence, in theory, 
+a Figure could look down upon Flatland and see simultaneously the insides of all things</i></small></a>
+</h1>
 
 
 <p>Thoughtland is an end-to-end system that produces an English
@@ -23,12 +26,30 @@ algorithm applied to some training data.</p>
 
 <h2>Submit a Weka ARFF file for analysis</h2>
 
-<form action="/tl/submission/new" method="POST" enctype-"multipart/form-data">
+<form action="/tl/submission/new" method="POST" enctype="multipart/form-data">
 
-<p>Algorithm to use: <input type="text" size="50" name="algo"></input></p>
-<p>Algorithm parameters: <input type="text" size="100" name="params"></input></p>
+<p>Algorithm to use: <input type="text" size="50" name="algo"></input>
+<% if(ServletState.isLocked()) { %>
+<br><i>This is a public server, only the following algorithms are accepted:</i><br>
+<ul>
+<% for(String algo: ServletState.getLockedAlgos()) { %>
+<li><tt><%= algo %></tt></li>
+<% } %>
+</ul>
+<% } %>
+</p>
+<p>Algorithm parameters: <input type="text" size="100" name="params"></input>
+<% if(ServletState.isLocked()) { %>
+<br><i>This is a public server, only the following parameters are accepted:</i><br>
+<ul>
+<% for(String param: ServletState.getLockedParams()) { %>
+<li><tt><%= param %></tt></li>
+<% } %>
+</ul>
+<% } %>
+</p>
 
-<p>Submit a Weka ARFF file for analysis (maximum 500k):<br> <input type="file" name="upload_file> </p>
+<p>Submit a Weka ARFF file for analysis (maximum <%= ServletState.getProperties().getProperty("maxSizeStr") %>):<br> <input type="file" name="upload_file"> </p>
 
 <p>Please note, in a public server everybody will be able to access (and download) your submission (contact the 
 administrator to have the file removed if you submit something by mistake).</p>
@@ -46,6 +67,7 @@ administrator to have the file removed if you submit something by mistake).</p>
 </p>
 
 <p><input type="submit"></p>
+</form>
 
 <h2>Past submissions</h2>
 

@@ -32,6 +32,8 @@ import java.io.FileWriter
 import java.io.FileOutputStream
 import net.duboue.thoughtland.Environment
 import net.duboue.thoughtland.Config
+import java.io.OutputStream
+import java.io.PrintStream
 
 object ServletState {
   val prop = new Properties
@@ -39,6 +41,10 @@ object ServletState {
   val utf8 = Charset.forName("UTF-8")
 
   var maxSize: Int = 0
+  var locked: Boolean = true
+  val lockedAlgos = List("weka.classifiers.functions.MultilayerPerceptron",
+    "weka.classifiers.functions.SMOreg").toArray
+  val lockedParams = List("-H", "-c").toArray
 
   def init(fileName: Option[String]) {
     lock.synchronized {
@@ -47,14 +53,27 @@ object ServletState {
       } else {
         prop.setProperty("admin", "unknown (admin not set)");
         prop.setProperty("maxSizeStr", "500k");
-        prop.setProperty("maxSizeBytes", "512000");
+        prop.setProperty("maxSizeBytes", "524288");
         prop.setProperty("dbDir", "/tmp");
+        prop.setProperty("locked", "true")
       }
       dbDir = new File(prop.getProperty("dbDir"))
-      maxSize = Integer.parseInt(prop.getProperty("maxSizeBytes"))
+      maxSize = prop.getProperty("maxSizeBytes").toInt
+      locked = prop.getProperty("locked").toBoolean
       load()
+      // re-start queued and interrupted
+      for (run <- runs)
+        if (run.status == RunStatus.RunQueued || run.status == RunStatus.RunOngoing)
+          taskQueue.offer(run.id)
+      executionThread.start()
     }
   }
+
+  def getMaxSize = maxSize
+  def isLocked = locked
+  def getLockedAlgos = lockedAlgos
+  def getLockedParams = lockedParams
+  def getProperties = prop
 
   private var dbDir: File = null
 
@@ -120,9 +139,9 @@ object ServletState {
       prop.setProperty("owner", owner)
       prop.setProperty("comment", comment.replaceAll("\n", "\\n"))
       prop.setProperty("algo", algo)
-      prop.setProperty("params", params.map { _.replaceAll("\\t", " ") }.mkString("\\t"))
+      prop.setProperty("params", params.map { _.replaceAll("\t", " ") }.mkString("\t"))
       prop.setProperty("num_iter", s"$numIter")
-      val f = new FileOutputStream(new File(s"$prefix.properties"))
+      val f = new FileOutputStream(new File(dbDir, s"$prefix.properties"))
       prop.save(f, toString)
       f.close
       log("Created")
@@ -130,7 +149,7 @@ object ServletState {
 
     private def loadProperties = lock synchronized {
       val prop = new Properties
-      val reader = new FileReader(new File(s"$prefix.properties"))
+      val reader = new FileReader(new File(dbDir, s"$prefix.properties"))
       prop.load(reader)
       reader.close
       _owner = prop.getProperty("owner")
@@ -152,7 +171,7 @@ object ServletState {
     def params = retrieve { () => _params }
     def numIter = retrieve { () => _numIter }
 
-    def toLine(): String = s"$id\\t$prefix\\t$status"
+    def toLine(): String = s"$id\t$prefix\t$status"
   }
 
   private def lineToRun(l: String) = {
@@ -189,7 +208,9 @@ object ServletState {
     runs += run
     Files.copy(arff, new File(dbDir, s"$prefix.arff"))
     run.start(sentBy, comments, algo, params, numIter)
-    taskQueue.add(id)
+    save()
+    taskQueue.put(id)
+    id
   }
 
   private val taskQueue = new java.util.concurrent.LinkedBlockingQueue[Int](100)
@@ -198,9 +219,9 @@ object ServletState {
     override def run() {
       val pipeline = ThoughtlandDriver("default");
 
-      implicit val env = (Environment(dbDir, dbDir, Config(1, false)))
       while (true) {
         val id = taskQueue.take()
+        System.err.println(s"Got id=$id")
         var run: Run = null
         lock.synchronized {
           val previous = runs(id)
@@ -208,15 +229,29 @@ object ServletState {
           runs(id) = run
           save()
         }
+        val tmpDir = new File(dbDir, s"run${run.id}.tmp")
+        tmpDir.mkdir()
+        implicit val env = (Environment(dbDir, tmpDir, Config(1, false)))
+        val orig = System.out
+        System.setOut(new PrintStream(new OutputStream() {
+          val line = new StringBuilder
+          def write(c: Int) = line.append(c.asInstanceOf[Char])
+          override def flush = {
+            run.log(line.toString)
+            line.setLength(0)
+          }
+        }, true))
         //TODO this should be moved to a separate JVM so we can time-out and kill the process
         val generated = pipeline(TrainingData(new File(dbDir, s"${run.prefix}.arff").toURI),
           run.algo, run.params, run.numIter)
         val pw = new PrintWriter(new File(dbDir, s"${run.prefix}.txt"))
+        System.setOut(orig)
         pw.println(generated)
         pw.close
         lock.synchronized {
           val previous = runs(id)
           run = Run(previous.id, previous.prefix, RunFinished)
+          run.log(generated.toString)
           runs(id) = run
           save()
         }

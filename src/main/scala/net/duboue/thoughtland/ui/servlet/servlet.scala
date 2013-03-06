@@ -18,29 +18,73 @@
 
 package net.duboue.thoughtland.ui.servlet;
 
-import java.io.File
-import java.io.FileReader
-import java.nio.charset.Charset
-import java.util.Properties
-
-import scala.collection.JavaConversions._
-
 import org.scalatra.ScalatraServlet
+import com.google.common.io.Files
+import scala.collection.JavaConversions._
+import com.google.common.io.CharStreams
+import java.io.InputStreamReader
+import javax.servlet.annotation.MultipartConfig
+import org.scalatra.servlet.FileUploadSupport
+import org.scalatra.servlet.SizeConstraintExceededException
+import java.io.IOException
+import java.io.File
 
-class ThoughtlandServlet extends ScalatraServlet {
+class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
+  error {
+    case e: SizeConstraintExceededException => s"File upload exceeded ${ServletState.prop.getProperty("maxSizeStr")}."
+    case e: IOException => s"Server error: $e."
+  }
 
   get("/") {
     <h1>Hello World!</h1>
   }
-  
+
+  get("/submission/:id") {
+    val id = params("id").toInt
+    <html>
+      <h1> Run { id } </h1>
+      <p> Status: { ServletState.runStatus(id) }  </p>
+      <p> Log: </p>
+      <ol>
+        {
+          for (line <- ServletState.runLog(id))
+            yield <li><tt> { line } </tt></li>
+        }
+      </ol>
+    </html>
+  }
+
   post("/submission/new") {
-    System.err.println("hola")
-    System.out.println(request.body)
-    System.err.println("hola");
-    <h1>Got it!</h1>
-    //TODO get the POST file
-    //TODO get the owner, comments, extra from GET
-    //TODO ServletState.enqueueRun(...)
+    val algo = request.getParameter("algo")
+
+    if (ServletState.isLocked && !ServletState.lockedAlgos.contains(algo)) {
+      <h1>Machine learning algorithm { algo } not accepted on a public server</h1>
+    } else {
+      def filterParams(list: List[String]): List[String] = list match {
+        case List() => List()
+        case l :: List() => List()
+        case l1 :: l2 :: ls => if (ServletState.lockedParams.contains(l1))
+          l1 :: l2 :: filterParams(ls)
+        else
+          filterParams(ls)
+      }
+
+      val params = filterParams(request.getParameter("params").split("\\s").toList)
+      val owner = request.getParameter("name")
+      val extra = request.getParameter("extra")
+      val _private = request.getParameter("private")
+      if (!_private.isEmpty) {
+        System.out.println(new java.util.Date() + " " + request.remoteAddress + " " + _private)
+      }
+      val item = fileParams("upload_file")
+      val tmpFile = File.createTempFile("upload", ".arff")
+      item.write(tmpFile)
+      //    System.err.println(new String(item.get, item.charset.getOrElse("UTF-8")))
+      val id = ServletState.enqueueRun(tmpFile, owner, extra, algo, params.toArray, 500)
+      tmpFile.delete()
+
+      <a href={s"/tl/submission/$id"}>Created submission { id }</a>
+    }
   }
 }
 
