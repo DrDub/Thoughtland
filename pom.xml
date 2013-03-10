@@ -23,11 +23,6 @@
 		<scala.short_version>2.10</scala.short_version>
 	</properties>
 
-	<!-- <repositories> <repository> <id>scala-tools.org</id> <name>Scala-Tools 
-		Maven2 Repository</name> <url>http://scala-tools.org/repo-releases</url> 
-		</repository> </repositories> <pluginRepositories> <pluginRepository> <id>scala-tools.org</id> 
-		<name>Scala-Tools Maven2 Repository</name> <url>http://scala-tools.org/repo-releases</url> 
-		</pluginRepository> </pluginRepositories> -->
 	<dependencies>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
@@ -163,6 +158,11 @@
 			<artifactId>jetty-plus</artifactId>
 			<version>9.0.0.RC1</version>
 		</dependency>
+		<dependency>
+			<groupId>jlibs</groupId>
+			<artifactId>jlibs-core</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -177,17 +177,18 @@
 						<id>scala-compile-first</id>
 						<phase>process-resources</phase>
 						<goals>
-						    <goal>add-source</goal>
+							<goal>add-source</goal>
 							<goal>compile</goal>
 						</goals>
-					</execution>									
+					</execution>
 					<execution>
 						<id>scala-test-compile</id>
 						<phase>process-test-resources</phase>
 						<goals>
 							<goal>testCompile</goal>
 						</goals>
-					</execution>					<execution>
+					</execution>
+					<execution>
 						<goals>
 							<goal>compile</goal>
 							<goal>testCompile</goal>
@@ -230,35 +231,27 @@
 				</execution> <execution> <id>deploy-external-dependencies</id> <phase>deploy</phase> 
 				<goals> <goal>deploy-external</goal> </goals> </execution> </executions> 
 				</plugin> -->
-        <!--  plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <mainClass>net.duboue.thoughtland.Main</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin-->
-    <plugin>
-      <artifactId>maven-assembly-plugin</artifactId>
-      <configuration>
-        <archive>
-          <manifest>
-            <mainClass>net.duboue.thoughtland.Main</mainClass>
-          </manifest>
-        </archive>
-        <descriptorRefs>
-          <descriptorRef>jar-with-dependencies</descriptorRef>
-        </descriptorRefs>
-      </configuration>
-    </plugin>      		
-      </plugins>
+			<!-- plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-jar-plugin</artifactId> 
+				<configuration> <archive> <manifest> <addClasspath>true</addClasspath> <mainClass>net.duboue.thoughtland.Main</mainClass> 
+				</manifest> </archive> </configuration> </plugin -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>net.duboue.thoughtland.Main</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+			</plugin>
+		</plugins>
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
@@ -305,6 +298,12 @@
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
+		</repository>
+		<repository>
+			<id>jlibs-repository</id>
+			<name>JLibs Repository</name>
+			<url>https://github.com/santhosh-tekuri/maven-repository/raw/master/</url>
+			<layout>default</layout>
 		</repository>
 	</repositories>
 	<url>http://thouhtland.duboue.net</url>

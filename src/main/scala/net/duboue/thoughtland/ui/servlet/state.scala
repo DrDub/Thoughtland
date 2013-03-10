@@ -19,21 +19,26 @@
 package net.duboue.thoughtland.ui.servlet;
 
 import java.io.File
-import java.io.FileReader
-import java.nio.charset.Charset
-import java.util.Properties
-import scala.collection.JavaConversions._
-import org.scalatra.ScalatraServlet
-import com.google.common.io.Files
-import net.duboue.thoughtland.ThoughtlandDriver
-import java.io.PrintWriter
-import net.duboue.thoughtland.TrainingData
-import java.io.FileWriter
 import java.io.FileOutputStream
-import net.duboue.thoughtland.Environment
-import net.duboue.thoughtland.Config
+import java.io.FileReader
+import java.io.FileWriter
 import java.io.OutputStream
 import java.io.PrintStream
+import java.io.PrintWriter
+import java.net.URI
+import java.nio.charset.Charset
+import java.util.Properties
+
+import scala.Array.canBuildFrom
+import scala.collection.JavaConversions.asScalaBuffer
+
+import com.google.common.io.Files
+
+import jlibs.core.lang.JavaProcessBuilder
+import net.duboue.thoughtland.Config
+import net.duboue.thoughtland.Environment
+import net.duboue.thoughtland.ThoughtlandDriver
+import net.duboue.thoughtland.TrainingData
 
 object ServletState {
   val prop = new Properties
@@ -217,8 +222,6 @@ object ServletState {
 
   val executionThread = new Thread() {
     override def run() {
-      val pipeline = ThoughtlandDriver("default");
-
       while (true) {
         val id = taskQueue.take()
         System.err.println(s"Got id=$id")
@@ -231,31 +234,66 @@ object ServletState {
         }
         val tmpDir = new File(dbDir, s"run${run.id}.tmp")
         tmpDir.mkdir()
-        implicit val env = (Environment(dbDir, tmpDir, Config(1, false)))
-        val orig = System.out
-        System.setOut(new PrintStream(new OutputStream() {
+        val outFile = new File(dbDir, s"${run.prefix}.txt")
+        val logStream = new PrintStream(new OutputStream() {
           val line = new StringBuilder
           def write(c: Int) = line.append(c.asInstanceOf[Char])
           override def flush = {
             run.log(line.toString)
             line.setLength(0)
           }
-        }, true))
-        //TODO this should be moved to a separate JVM so we can time-out and kill the process
-        val generated = pipeline(TrainingData(new File(dbDir, s"${run.prefix}.arff").toURI),
-          run.algo, run.params, run.numIter)
-        val pw = new PrintWriter(new File(dbDir, s"${run.prefix}.txt"))
-        System.setOut(orig)
-        pw.println(generated)
-        pw.close
+        }, true)
+
+        val jvm = new JavaProcessBuilder();
+        jvm.classpath(System.getProperty("java.class.path"))
+        jvm.maxHeap("2G")
+        jvm.mainClass(PipelineApp.getClass.getName.replaceAll("\\$", ""))//classOf[PipelineApp].getName)// + "$")
+        jvm.arg(new File(dbDir, s"${run.prefix}.arff").toURI.toString)
+          .arg(dbDir.toString)
+          .arg(tmpDir.toString)
+          .arg(outFile.toString)
+          .arg(run.algo)
+          .arg(run.numIter.toString)
+        run.params.foreach { param => jvm.arg(param) }
+
+        val process = jvm.launch(logStream, logStream)
+
+        //TODO add a time-out and kill the process
+        val result = process.waitFor()
+
+        val success = result == 0 && outFile.exists
+
         lock.synchronized {
           val previous = runs(id)
-          run = Run(previous.id, previous.prefix, RunFinished)
-          run.log(generated.toString)
+          run = Run(previous.id, previous.prefix, if (success) RunFinished else RunError)
           runs(id) = run
           save()
         }
       }
     }
+  }
+}
+
+object PipelineApp {
+
+  def main(args: Array[String]) {
+    val dataUri = new URI(args(0))
+    val dbDir = new File(args(1))
+    val tmpDir = new File(args(2))
+    val outFile = new File(args(3))
+    val algo = args(4)
+    val numIter = args(5).toInt
+    val params = args.drop(6)
+
+    implicit val env = Environment(dbDir, tmpDir, Config(1, false))
+    val generated = ThoughtlandDriver("default").apply(TrainingData(dataUri), algo,
+      params, numIter)
+
+    System.out.println(generated)
+
+    val pw = new PrintWriter(outFile)
+    pw.println(generated)
+    pw.close()
+    System.exit(0)
   }
 }
