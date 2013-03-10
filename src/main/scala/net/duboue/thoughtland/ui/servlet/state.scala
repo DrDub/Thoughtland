@@ -55,7 +55,7 @@ object ServletState {
         prop.setProperty("maxSizeStr", "500k");
         prop.setProperty("maxSizeBytes", "524288");
         prop.setProperty("dbDir", "/tmp");
-        prop.setProperty("locked", "true")
+        prop.setProperty("locked", "false")
       }
       dbDir = new File(prop.getProperty("dbDir"))
       maxSize = prop.getProperty("maxSizeBytes").toInt

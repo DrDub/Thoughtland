@@ -7,6 +7,7 @@ import net.duboue.thoughtland.ui.servlet.ServletState
 import net.duboue.thoughtland.ui.servlet.ThoughtlandServlet
 import org.eclipse.jetty.servlet.ServletHolder
 import javax.servlet.MultipartConfigElement
+import org.eclipse.jetty.server.ServerConnector
 
 object Main {
 
@@ -14,7 +15,13 @@ object Main {
 
     ServletState.init(args.headOption)
 
-    val server = new Server(7071); // TOTL
+    val server = if (!ServletState.isLocked) new Server() else new Server(7071);
+    if (!ServletState.isLocked) {
+      val connector = new ServerConnector(server);
+      connector.setHost("localhost");
+      connector.setPort(7071); // TOTL in l33t
+      server.addConnector(connector);
+    }
 
     val configuration: Array[String] = List(
       "org.eclipse.jetty.webapp.WebInfConfiguration",
