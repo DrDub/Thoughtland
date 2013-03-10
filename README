@@ -61,3 +61,11 @@ Hacking Thoughtland
 
 Take a look at architecture.scala and types.scala. If you want to contribute a new 
 component for any of the four stages, just implement the Traits and send a pull-request.
+
+Developing in Eclipse: you will need to check out OpenSchema and SimpleNLG, install the 
+jars from the command line  per the descriptions above, install the scala plugin from 
+
+http://scala-ide.org/download/milestone.html
+
+and add the scala nature to the project plus add the src/{main,test}/scala as source folders
+(that seems to be a bug either in the maven or scala plugins or in this project pom.xml).
