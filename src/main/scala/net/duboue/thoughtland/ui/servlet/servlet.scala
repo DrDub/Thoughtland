@@ -64,7 +64,7 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
         case List() => List()
         case l :: List() => List()
         case l1 :: l2 :: ls => if (ServletState.lockedParams.contains(l1))
-          l1 :: l2 :: filterParams(ls)
+          l1 :: l2.replaceAll("[^A-Za-z0-9.]", "") :: filterParams(ls)
         else
           filterParams(ls)
       }
@@ -83,7 +83,7 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
       val id = ServletState.enqueueRun(tmpFile, owner, extra, algo, params.toArray, 500)
       tmpFile.delete()
 
-      <a href={s"/tl/submission/$id"}>Created submission { id }</a>
+      <a href={ s"/tl/submission/$id" }>Created submission { id }</a>
     }
   }
 }
