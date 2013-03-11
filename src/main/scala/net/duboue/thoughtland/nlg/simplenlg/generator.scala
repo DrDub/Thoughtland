@@ -129,7 +129,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
       instantiated.append(".")
       Sentence(instantiated.toString())
     }
-    def templateClauses(clauses: java.util.List[java.util.Map[String, Object]]): List[Sentence] =
+    def templateClauses(clauses: List[java.util.Map[String, Object]]): List[Sentence] =
       clauses.filter { _.containsKey("template") }.map(templateClause).toList
 
     // generate
@@ -148,7 +148,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
             //TODO if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
             else
               // unknown, go template route
-              sentences = templateClauses(aggrSegment);
+              sentences = templateClauses(aggrSegment.toList);
 
             def generateIntroductorySentence() = {
               val fd = aggrSegment.get(0)
@@ -192,7 +192,25 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                 // (2) order by component (component one is near all the other, 
                 //     component two is close to component three)
 
-                templateClauses(aggrSegment)
+                // first filter repeated pairs
+                val seen = new scala.collection.mutable.HashSet[String] // pair of component names, sorted
+                val filtered = aggrSegment.filter {
+                  clause =>
+                    val key = getFrame(clause, "pred1").get("component").map {
+                      _.asInstanceOf[Frame].get("name").head.toString
+                    }.sorted.mkString("-")
+                    if (seen.contains(key))
+                      false
+                    else {
+                      // side effects are bad for you, don't try this at home
+                      seen += key
+                      true
+                    }
+                }
+                //val pairsAtADistance = new scala.collection.mutable.HashMap[String,java.util.Map[String,Object]]
+                val sorted = filtered.sortBy[String](clause => getVariable(clause, "pred2"));
+
+                templateClauses(sorted.toList)
               }
 
               def generateNonDistanceAttributeAggregatedSentences() = {
