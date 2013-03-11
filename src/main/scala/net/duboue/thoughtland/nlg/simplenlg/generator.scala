@@ -89,6 +89,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
     def verbalizeMagnitude(m: RelativeMagnitude.RelativeMagnitude)(implicit _type: String) = _type match {
       case "c-size" => sizeToStr(m)
       case "c-density" => densityToStr(m)
+      case "c-distance" => distanceToStr(m)
     }
     // template system for fall-back
     def templateClause(clause: java.util.Map[String, Object]): Sentence = {
@@ -101,7 +102,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
               val components = fd.get("component")
               val component1 = components(0).asInstanceOf[Frame]
               val component2 = components(1).asInstanceOf[Frame]
-              s"between ${component1.get("name").head} and ${component2.get("name").head}"
+              s"${component1.get("name").head} and ${component2.get("name").head}"
             } else if (fd.containsKey("name")) {
               fd.get("name").head.toString
             } else {
@@ -207,9 +208,24 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                       true
                     }
                 }
-                //val pairsAtADistance = new scala.collection.mutable.HashMap[String,java.util.Map[String,Object]]
-                val sorted = filtered.sortBy[String](clause => getVariable(clause, "pred2"));
+                val pairsAtADistance = new scala.collection.mutable.HashMap[String, scala.collection.mutable.Buffer[Pair[String, String]]]
+                filtered.foreach {
+                  clause =>
+                    val components = getFrame(clause, "pred1").get("component").map {
+                      _.asInstanceOf[Frame].get("name").head.toString
+                    }.sorted
+                    val distance = getVariable(clause, "pred2")
+                    if (pairsAtADistance.contains(distance))
+                      pairsAtADistance(distance) += Pair(components(0), components(1))
+                    else
+                      pairsAtADistance += distance -> new scala.collection.mutable.ArrayBuffer[Pair[String, String]]
+                }
 
+                val sorted = filtered.sortBy[String](clause => getVariable(clause, "pred2"));
+                sorted.foreach {
+                  clause =>
+                    clause.put("magnitude", verbalizeMagnitude(typeStrToMagnitude(clause.get("magnitude").toString)) + " each other")
+                }
                 templateClauses(sorted.toList)
               }
 
