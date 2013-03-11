@@ -90,6 +90,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
       case "c-size" => sizeToStr(m)
       case "c-density" => densityToStr(m)
     }
+    // template system for fall-back
     def templateClause(clause: java.util.Map[String, Object]): Sentence = {
       def verbalize(obj: Object): String =
         obj match {
@@ -131,13 +132,25 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
     def templateClauses(clauses: java.util.List[java.util.Map[String, Object]]): List[Sentence] =
       clauses.filter { _.containsKey("template") }.map(templateClause).toList
 
+    // generate
     new GeneratedText(plan.getParagraphs().map {
       para =>
         Paragraph(para.map {
           aggrSegment =>
+            // this is like a 'where' clause in Haskell. This is the return value, 'sentences'
+            var sentences: List[Sentence] = null; // using var to avoid forward reference error
+            if (aggrSegment.size() == 1 && aggrSegment.get(0).get("pred").equals("c-conjunction"))
+              sentences = generateIntroductorySentence()
+            else if (aggrSegment.forall(clause => clause.get("pred").equals("has-attribute")))
+              // all entries in aggregation set have the same attribute
+              sentences = generateAttributeAggregatedSentences()
+            //TODO else, all about the same component
+            //TODO if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
+            else
+              // unknown, go template route
+              sentences = templateClauses(aggrSegment);
 
-            // introductory sentence
-            if (aggrSegment.size() == 1 && aggrSegment.get(0).get("pred").equals("c-conjunction")) {
+            def generateIntroductorySentence() = {
               val fd = aggrSegment.get(0)
               val p = nlgFactory.createClause();
               p.setSubject("there");
@@ -162,17 +175,27 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
               p.setObject(new CoordinatedPhraseElement(phrCom, phrDim));
               //              realiser.setDebugMode(true)
               List(Sentence(realiser.realiseSentence(p)))
-            } else // if all entries in aggregation set have the same attribute
-            if (aggrSegment.forall(clause => clause.get("pred").equals("has-attribute"))) {
+            }
+
+            def generateAttributeAggregatedSentences() = {
               implicit val _type = getFrame(aggrSegment.get(0), "pred1").getType.toString
-              if (_type.equals("c-distance")) {
+              var attributeSentences: List[Sentence] = null;
+
+              if (_type.equals("c-distance"))
+                attributeSentences = generateDistanceAggregatedSentences()
+              else
+                attributeSentences = generateNonDistanceAttributeAggregatedSentences();
+
+              def generateDistanceAggregatedSentences() = {
                 // distances are a completely different animal, two strategies: 
                 // (1) order by distance (components one, two and three are far from each other)
                 // (2) order by component (component one is near all the other, 
                 //     component two is close to component three)
-                
+
                 templateClauses(aggrSegment)
-              } else {
+              }
+
+              def generateNonDistanceAttributeAggregatedSentences() = {
                 // order them by magnitude value
                 val sorted = aggrSegment.sortBy[String](clause => getVariable(clause, "pred2"));
                 val c = nlgFactory.createCoordinatedPhrase();
@@ -206,13 +229,10 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
 
                 List(Sentence(realiser.realiseSentence(c)))
               }
+              attributeSentences
+            }
 
-              //TODO all about the same component
-              //TODO if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
-            } else
-              // unknown, go template route
-              templateClauses(aggrSegment)
-
+            sentences
         }./:(List[Sentence]())(_ ++ _))
     }.toList)
   }
