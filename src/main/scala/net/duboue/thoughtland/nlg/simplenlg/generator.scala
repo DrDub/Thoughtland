@@ -212,7 +212,6 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
     def getFrames(): java.util.Collection[net.sf.openschema.Frame] = allFrames
   }
   def verbalize(frames: FrameSet, plan: DocumentPlan): GeneratedText = {
-//    System.err.println(plan)
     // helper functions
     def getFrame(fd: java.util.Map[String, Object], key: String): Frame = {
       fd.get(key) match {
@@ -234,19 +233,39 @@ class SimpleNlgGenerator extends Generator with BasicVerbalizations {
       case "c-density" => densityToStr(m)
     }
     def templateClause(clause: java.util.Map[String, Object]): Sentence = {
+      def verbalize(obj: Object): String =
+        obj match {
+          case s: String => if (s.startsWith("\"")) s.substring(1, s.length() - 1) else s
+          case m: java.util.Map[String, Object] => {
+            val fd = frames.getFrame(m.get("object-id").toString)
+            if (ontology.isA(fd.getType(), "c-distance")) {
+              val components = fd.get("component")
+              val component1 = components(0).asInstanceOf[Frame]
+              val component2 = components(1).asInstanceOf[Frame]
+              s"between ${component1.get("name").head} and ${component2.get("name").head}"
+            } else if (fd.containsKey("name")) {
+              fd.get("name").head.toString
+            } else {
+              fd.toString
+            }
+          }
+          case x => x.toString() + " [" + x.getClass() + "]"
+        }
       val template = clause.get("template").toString();
       val instantiated = new StringBuffer();
       val fields = template.split("\\@");
       instantiated.append((if (fields(0).startsWith("\"")) fields(0).substring(1) else fields(0)));
       for (i <- 1.to(fields.length - 1)) {
-        val nameRest = fields(i).split("\\.", 2);
-        if (clause.containsKey(nameRest(0)) && clause.get(nameRest(0)) != null) {
-          val value = clause.get(nameRest(0)).toString();
-          instantiated.append(if (value.startsWith("\"")) value.substring(1, value.length() - 1) else value);
-        }
-        instantiated.append(if (i == fields.length - 1 && nameRest(1).endsWith("\"")) nameRest(1).substring(0,
-          nameRest(1).length() - 1)
-        else nameRest(1));
+        val keyRest = fields(i).split("\\.", 2)
+        val key = keyRest(0)
+        val rest = keyRest(1)
+        val trimRest = if (i == fields.length - 1 && rest.endsWith("\"")) rest.substring(0,
+          rest.length() - 1)
+        else rest
+        if (clause.containsKey(key) && clause.get(key) != null)
+          instantiated.append(verbalize(clause.get(key)));
+
+        instantiated.append(trimRest);
       }
       instantiated.append(".")
       Sentence(instantiated.toString())

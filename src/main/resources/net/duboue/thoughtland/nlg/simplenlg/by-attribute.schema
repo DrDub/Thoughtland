@@ -54,7 +54,8 @@ predicate pred-distance
   properties  
     component == attribute.component
   output
-    template "Component @name.'s distance is @magnitude."
+    template "The distance @distance. is @magnitude."
+    distance attribute
     name       component.name
     magnitude  attribute.magnitude.#TYPE
     pred has-attribute
