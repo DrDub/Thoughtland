@@ -247,7 +247,7 @@ object ServletState {
         val jvm = new JavaProcessBuilder();
         jvm.classpath(System.getProperty("java.class.path"))
         jvm.maxHeap("2G")
-        jvm.mainClass(PipelineApp.getClass.getName.replaceAll("\\$", ""))//classOf[PipelineApp].getName)// + "$")
+        jvm.mainClass(PipelineApp.getClass.getName.replaceAll("\\$", "")) //classOf[PipelineApp].getName)// + "$")
         jvm.arg(new File(dbDir, s"${run.prefix}.arff").toURI.toString)
           .arg(dbDir.toString)
           .arg(tmpDir.toString)
@@ -285,15 +285,18 @@ object PipelineApp {
     val numIter = args(5).toInt
     val params = args.drop(6)
 
-    implicit val env = Environment(dbDir, tmpDir, Config(1, false))
-    val generated = ThoughtlandDriver("default").apply(TrainingData(dataUri), algo,
-      params, numIter)
+    try {
+      implicit val env = Environment(dbDir, tmpDir, Config(1, false))
+      val generated = ThoughtlandDriver("default").apply(TrainingData(dataUri), algo,
+        params, numIter)
 
-    System.out.println(generated)
+      System.out.println(generated)
 
-    val pw = new PrintWriter(outFile)
-    pw.println(generated)
-    pw.close()
-    System.exit(0)
+      val pw = new PrintWriter(outFile)
+      pw.println(generated)
+      pw.close()
+    } finally {
+      System.exit(0)
+    }
   }
 }
