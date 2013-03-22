@@ -62,34 +62,77 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
 
     //System.out.println(params.toList)
 
-    // do the leave-one-out in parallel
+    // do the folds in parallel
     case class WekaResults(points: Array[Double], expected: Double, returned: Double)
+
+    //TODO move this to a parameter
+    val targetNumberOfPoints = 300;
+
+    val fewPoints = instances.numInstances() < targetNumberOfPoints
+    val evalPointsPerTask = if (fewPoints)
+      instances.numInstances() / targetNumberOfPoints
+    else
+      1;
+
+    val shuffledIds = new java.util.ArrayList[Int](0.to(instances.numInstances()).toList)
+    java.util.Collections.shuffle(shuffledIds, new java.util.Random(env.config.randomSeed))
+
+    var leftOverPoints = if (fewPoints)
+      instances.numInstances() % evalPointsPerTask
+    else
+      0;
+
+    val numberOfFolds = if (fewPoints) instances.numInstances() else
+      targetNumberOfPoints;
+    val extraPointsQuantum = Math.max(leftOverPoints / numberOfFolds, 1)
+
+    val pointsPerFold = new Array[Int](numberOfFolds)
+    val foldStart = new Array[Int](numberOfFolds)
+
+    for (i <- 0.to(numberOfFolds - 1)) {
+      val extra = Math.min(leftOverPoints, extraPointsQuantum)
+      pointsPerFold(i) = evalPointsPerTask + extra
+      leftOverPoints -= extra
+      if (i > 0)
+        foldStart(i) = foldStart(i - 1) + pointsPerFold(i - 1)
+    }
 
     val cpus = Runtime.getRuntime().availableProcessors()
     val threadPool = Executors.newFixedThreadPool(cpus); // this should use futures but I'm getting some maven errors with it
 
     val results = Array.ofDim[WekaResults](instances.numInstances())
-    val leftOverTasks = new AtomicInteger(instances.numInstances());
+    val leftOverTasks = new AtomicInteger(numberOfFolds);
     val lock = new Object
     var exc: Exception = null
-    for (idx <- 0.to(instances.numInstances() - 1)) {
+
+    for (idx <- 0.to(numberOfFolds - 1)) {
       threadPool.submit(new Runnable() {
         def run = {
           try {
             val foldInstances = new Instances(instances)
             val evalInstances = new Instances(instances)
             evalInstances.delete();
-            evalInstances.add(foldInstances.instance(idx))
-            val evalInstance = evalInstances.instance(0)
-            foldInstances.delete(idx)
+
+            val start = foldStart(idx)
+
+            for (i <- 0.to(pointsPerFold(idx) - 1))
+              evalInstances.add(foldInstances.instance(shuffledIds(start + i)))
+            for (i <- 0.to(pointsPerFold(idx) - 1))
+              foldInstances.delete(shuffledIds(start + i))
+
             val classifier = Class.forName(algo).newInstance().asInstanceOf[Classifier]
             classifier.setOptions(params.clone)
             classifier.buildClassifier(foldInstances)
-            val classified = classifier.classifyInstance(evalInstance)
-            results(idx) = WekaResults(extract(classifier, evalInstance, evalInstance.classValue(), classified),
-              evalInstance.classValue(), classified)
+
+            for (i <- 0.to(pointsPerFold(idx) - 1)) {
+              val evalInstance = evalInstances.instance(i)
+              val classified = classifier.classifyInstance(evalInstance)
+              results(shuffledIds(start + i)) = WekaResults(extract(classifier, evalInstance, evalInstance.classValue(), classified),
+                evalInstance.classValue(), classified)
+            }
+
             val left = leftOverTasks.decrementAndGet()
-//            System.out.println("Done " + idx + " left " + left)
+            System.out.println("Done " + idx + " left " + left)
             if (left == 0)
               lock.synchronized {
                 lock.notifyAll()
@@ -107,8 +150,10 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
     lock.synchronized {
       lock.wait()
     }
-    if (exc != null)
+    if (exc != null) {
+      System.err.println("Exception found.")
       throw exc
+    }
 
     // get the points
     var acc = 0.0

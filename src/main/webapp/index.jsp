@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Thoughtland</title>
+<link rel="stylesheet" type="text/css" href="style.css"></link>
 </head>
 <body background="images/wall4.png">
 <h1><img src="images/fl.png">Thoughtland<br>
@@ -9,6 +10,7 @@
 a Figure could look down upon Flatland and see simultaneously the insides of all things</i></small></a>
 </h1>
 
+<a href="https://github.com/DrDub/Thoughtland"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
 
 <p>Thoughtland is an end-to-end system that produces an English
 text summarizing the error function of a machine learning
