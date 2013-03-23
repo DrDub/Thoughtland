@@ -232,6 +232,7 @@ object ServletState {
           runs(id) = run
           save()
         }
+        val thisRun = run
         val tmpDir = new File(dbDir, s"run${run.id}.tmp")
         tmpDir.mkdir()
         val outFile = new File(dbDir, s"${run.prefix}.txt")
@@ -258,8 +259,31 @@ object ServletState {
 
         val process = jvm.launch(logStream, logStream)
 
-        //TODO add a time-out and kill the process
-        val result = process.waitFor()
+        val threadToInterrupt = Thread.currentThread()
+        val finished = new Array[Boolean](1)
+        var result = 0
+
+        if (ServletState.isLocked)
+          // time-out and kill the process
+          new Thread() {
+            override def run: Unit = {
+              Thread.sleep(1000 * 60 * 20)
+              if (!finished(0)) {
+                System.err.println("Run " + thisRun.id + " timed out")
+                thisRun.log("Timed out")
+                threadToInterrupt.interrupt()
+              }
+            }
+          }.start();
+
+        try {
+          result = process.waitFor()
+          finished(0) = true
+        } catch {
+          case e: InterruptedException =>
+            process.destroy()
+            result = -1
+        }
 
         val success = result == 0 && outFile.exists
 
