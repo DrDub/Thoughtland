@@ -68,22 +68,17 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
     //TODO move this to a parameter
     val targetNumberOfPoints = 300;
 
-    val fewPoints = instances.numInstances() < targetNumberOfPoints
-    val evalPointsPerTask = if (fewPoints)
-      instances.numInstances() / targetNumberOfPoints
-    else
-      1;
+    val numInstances = instances.numInstances()
 
-    val shuffledIds = new java.util.ArrayList[Int](0.to(instances.numInstances()).toList)
+    val fewPoints = numInstances < targetNumberOfPoints
+    val evalPointsPerTask = if (fewPoints) 1 else numInstances / targetNumberOfPoints;
+
+    val shuffledIds = new java.util.ArrayList[Int](0.to(numInstances - 1).toList)
     java.util.Collections.shuffle(shuffledIds, new java.util.Random(env.config.randomSeed))
 
-    var leftOverPoints = if (fewPoints)
-      instances.numInstances() % evalPointsPerTask
-    else
-      0;
+    var leftOverPoints = if (fewPoints) 0 else numInstances % targetNumberOfPoints;
 
-    val numberOfFolds = if (fewPoints) instances.numInstances() else
-      targetNumberOfPoints;
+    val numberOfFolds = if (fewPoints) numInstances else targetNumberOfPoints;
     val extraPointsQuantum = Math.max(leftOverPoints / numberOfFolds, 1)
 
     val pointsPerFold = new Array[Int](numberOfFolds)
@@ -100,7 +95,7 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
     val cpus = Runtime.getRuntime().availableProcessors()
     val threadPool = Executors.newFixedThreadPool(cpus); // this should use futures but I'm getting some maven errors with it
 
-    val results = Array.ofDim[WekaResults](instances.numInstances())
+    val results = Array.ofDim[WekaResults](numInstances)
     val leftOverTasks = new AtomicInteger(numberOfFolds);
     val lock = new Object
     var exc: Exception = null
@@ -117,8 +112,9 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
 
             for (i <- 0.to(pointsPerFold(idx) - 1))
               evalInstances.add(foldInstances.instance(shuffledIds(start + i)))
-            for (i <- 0.to(pointsPerFold(idx) - 1))
-              foldInstances.delete(shuffledIds(start + i))
+            val idsToRemove = 0.to(pointsPerFold(idx) - 1).map { i => shuffledIds(start + i ) }.toList.sorted.reverse
+            for (id <- idsToRemove)
+              foldInstances.delete(id)
 
             val classifier = Class.forName(algo).newInstance().asInstanceOf[Classifier]
             classifier.setOptions(params.clone)
