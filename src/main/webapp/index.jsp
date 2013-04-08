@@ -5,13 +5,17 @@
 <link rel="stylesheet" type="text/css" href="style.css"></link>
 </head>
 <body background="images/wall4.png">
-<h1><img src="images/fl.png">Thoughtland<br>
-<a href="http://en.wikisource.org/wiki/Flatland_(second_edition)/Section_22"><small><i>I spoke not of a physical Dimension, but of a Thoughtland whence, in theory, 
-a Figure could look down upon Flatland and see simultaneously the insides of all things</i></small></a>
+<h1><img id="logo" src="images/fl.png">Thoughtland<br>
+<a href="http://en.wikisource.org/wiki/Flatland_(second_edition)/Section_22"><small><i>I spoke not of a physical Dimension, <br/>
+but of a Thoughtland whence, in theory,<br/> 
+a Figure could look down upon Flatland <br/>
+and see simultaneously the insides of <br/>
+all things</i></small></a>
 </h1>
 
 <a href="https://github.com/DrDub/Thoughtland"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
 
+<div id="main">
 <p>Thoughtland is an end-to-end system that produces an English
 text summarizing the error function of a machine learning
 algorithm applied to some training data.</p>
@@ -91,6 +95,7 @@ administrator to have the file removed if you submit something by mistake).</p>
 Thoughtland - Describing n-dimensional Objects<br>
 <a href="http://thoughtland.duboue.net">http://thoughtland.duboue.net</a><br>
 Thoughtland server administered by <b><%= ServletState.prop().getProperty("admin") %></b> <br>
+</div>
 
 </body>
 </html>

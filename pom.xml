@@ -163,6 +163,11 @@
 			<artifactId>jlibs-core</artifactId>
 			<version>1.0-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>net.sf.jgrapht</groupId>
+			<artifactId>jgrapht</artifactId>
+			<version>0.8.3</version>
+		</dependency>
 	</dependencies>
 
 	<build>

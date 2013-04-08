@@ -1,6 +1,4 @@
-<style type="text/css">
-
-  div.home{
+div.home{
   	background-image: url(images/wall4.png);
   	padding: 90px 90px 20px 90px;
   	vertical-align: middle;
@@ -8,24 +6,48 @@
   	width: 965;
   	left: 30%;
   	margin: auto;
-  }
-  H1{
+}
+
+H1{
   	color: #630;
-  }
-  table.tab{
+  	position: relative;
+  	left: 250px;
+  	top: 100px;
+  	font-size: 250%;
+}
+
+a { font-weight: bold; color: #000066; text-decoration: none; }
+
+h1 small {
+  font-size: 33%;   
+}
+  
+img#logo{
+  position: absolute;
+  left: -256px;
+  top: -50px;
+}
+
+div#main {
+  position: relative;
+  top: 200px;
+}
+
+  
+table.tab{
   	text-align: left;
   	
-  }
-  td.row{
+}
+td.row{
   	text-align: right;
   	width: 90px;
-  }
-  td.row2{
+}
+
+td.row2{
   	width: 50%;
-  }
-  td.row3{
+}
+
+td.row3{
   	width: 790px;
   	text-align: right;
-  }
-
-</style>
+}

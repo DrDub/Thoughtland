@@ -20,6 +20,8 @@ package net.duboue.thoughtland.nlg.simplenlg
 
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.JavaConversions.mapAsScalaMap
+import scala.collection.JavaConversions.collectionAsScalaIterable
+import scala.collection.JavaConversions.asScalaSet
 import org.xml.sax.InputSource
 import net.duboue.thoughtland.Analysis
 import net.duboue.thoughtland.Environment
@@ -45,6 +47,9 @@ import simplenlg.lexicon.Lexicon
 import simplenlg.phrasespec.NPPhraseSpec
 import simplenlg.realiser.english.Realiser
 import simplenlg.framework.CoordinatedPhraseElement
+import org.jgrapht.alg.BronKerboschCliqueFinder
+import org.jgrapht.graph.SimpleGraph
+import org.jgrapht.graph.DefaultEdge
 
 class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerbalizations {
 
@@ -208,6 +213,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                       true
                     }
                 }
+                // sort by distance
                 val pairsAtADistance = new scala.collection.mutable.HashMap[String, scala.collection.mutable.Buffer[Pair[String, String]]]
                 filtered.foreach {
                   clause =>
@@ -215,18 +221,104 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                       _.asInstanceOf[Frame].get("name").head.toString
                     }.sorted
                     val distance = getVariable(clause, "pred2")
-                    if (pairsAtADistance.contains(distance))
-                      pairsAtADistance(distance) += Pair(components(0), components(1))
-                    else
+                    if (!pairsAtADistance.contains(distance))
                       pairsAtADistance += distance -> new scala.collection.mutable.ArrayBuffer[Pair[String, String]]
+                    pairsAtADistance(distance) += Pair(components(0), components(1))
                 }
 
-                val sorted = filtered.sortBy[String](clause => getVariable(clause, "pred2"));
-                sorted.foreach {
-                  clause =>
-                    clause.put("magnitude", verbalizeMagnitude(typeStrToMagnitude(clause.get("magnitude").toString)) + " each other")
+                // see if there are any full cliques at a given distance
+                val cliquesAtADistance = pairsAtADistance.map {
+                  x =>
+                    x match {
+                      case (distance, pairs) =>
+                        val graph = new SimpleGraph[String, DefaultEdge](classOf[DefaultEdge])
+                        pairs.foreach { p =>
+                          p match {
+                            case (c1, c2) =>
+                              graph.addVertex(c1);
+                              graph.addVertex(c2);
+                              graph.addEdge(c1, c2)
+                          }
+                        }
+                        // look for maximal cliques
+                        val cliques = new BronKerboschCliqueFinder(graph).getAllMaximalCliques().map { s =>
+                          s.toList.sorted
+                        }.toList.filter(_.size > 2)
+
+                        // remove clique pairs from pairsAtADistance
+                        cliques.foreach {
+                          cliqueNodes =>
+                            for (i <- 0.to(cliqueNodes.size - 1))
+                              for (j <- (i + 1).to(cliqueNodes.size - 1)) 
+                                pairs -= Pair(cliqueNodes(i), cliqueNodes(j))
+                        }
+                        pairsAtADistance(distance) = pairs
+
+                        Tuple2(distance, cliques)
+                    }
                 }
-                templateClauses(sorted.toList)
+
+                // verbalize them
+                val cliqueSentences = cliquesAtADistance.map {
+                  p =>
+                    p match {
+                      case (distance, cliques) =>
+                        var first = true
+                        cliques.map {
+                          clique =>
+                            val c = nlgFactory.createCoordinatedPhrase();
+                            clique.foreach {
+                              component =>
+                                c.addCoordinate(nlgFactory.createNounPhrase(component))
+                            }
+                            val np = nlgFactory.createNounPhrase("component")
+                            np.addPostModifier(c)
+                            val clause = nlgFactory.createClause(
+                              np, "be", "all")
+                            if (!first)
+                              clause.addModifier("also")
+                            else
+                              first = false
+                            clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(distance)))
+                            clause.addComplement("each other")
+
+                            Sentence(realiser.realiseSentence(clause))
+                        }
+                    }
+                }.toList.flatten
+
+                // verbalize the rest
+                //TODO order by component and find similarities
+
+                val restSentences = pairsAtADistance.map {
+                  x =>
+                    x match {
+                      case (distance, pairs) =>
+                        var first = true
+                        pairs.map {
+                          pair =>
+                            val c = nlgFactory.createCoordinatedPhrase();
+                            c.addCoordinate(nlgFactory.createNounPhrase(pair._1))
+                            c.addCoordinate(nlgFactory.createNounPhrase(pair._2))
+                            val np = nlgFactory.createNounPhrase("component")
+                            np.addPostModifier(c)
+                            val clause = nlgFactory.createClause(
+                              np, "be", verbalizeMagnitude(typeStrToMagnitude(distance)))
+                            if (!first)
+                              clause.addModifier("also")
+                            else
+                              first = false
+                            clause.addComplement("each other")
+
+                            Sentence(realiser.realiseSentence(clause))
+                        }
+                    }
+                }.toList.flatten
+
+                //val sorted = filtered.sortBy[String](clause => getVariable(clause, "pred2"));
+
+                cliqueSentences ++ restSentences
+                //templateClauses(sorted.toList)
               }
 
               def generateNonDistanceAttributeAggregatedSentences() = {
@@ -234,6 +326,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                 val sorted = aggrSegment.sortBy[String](clause => getVariable(clause, "pred2"));
                 val c = nlgFactory.createCoordinatedPhrase();
                 var current: Pair[List[NPPhraseSpec], RelativeMagnitude.RelativeMagnitude] = null;
+                // helper function, adds current component / magnitude to the coordinated phrase
                 def addToPhrase() = if (current != null) {
                   c.addCoordinate(
                     nlgFactory.createClause(
@@ -263,6 +356,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
 
                 List(Sentence(realiser.realiseSentence(c)))
               }
+
               attributeSentences
             }
 
