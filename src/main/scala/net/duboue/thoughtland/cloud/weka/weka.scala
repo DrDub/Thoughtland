@@ -46,7 +46,7 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
 
   def apply(data: TrainingData, algo: String, baseParams: Array[String],
     extract: (Classifier, Instance, Double, Double) => Array[Double])(implicit env: Environment): CloudPoints = {
-    val params = baseParams ++ List("-S", env.config.randomSeed.toString)
+    val params = baseParams //++ List("-S", env.config.randomSeed.toString)
 
     // get the data in RAM, data is assumed to be an ARFF file
     val instances = new DataSource(data.uri.toURL().toString().replace("file:/", "/")).getDataSet()
@@ -66,7 +66,7 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
     case class WekaResults(points: Array[Double], expected: Double, returned: Double)
 
     //TODO move this to a parameter
-    val targetNumberOfPoints = 300;
+    val targetNumberOfPoints = 3;
 
     val numInstances = instances.numInstances()
 

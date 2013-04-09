@@ -30,7 +30,8 @@ algorithm applied to some training data.</p>
 </dl>
 </p>
 
-<p>Thoughtland is <a href="http://www.gnu.org/philosophy/free-sw.html">Free Software</a>, distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0.html">Affero GPL v3+</
+<p>Thoughtland is <a href="http://www.gnu.org/philosophy/free-sw.html">Free Software</a>, 
+distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0.html">Affero GPL v3+</a>.
 </p>
 
 <h2>Submit a Weka ARFF file for analysis</h2>

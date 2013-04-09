@@ -57,8 +57,8 @@ object ServletState {
         prop.load(new FileReader(fileName.get));
       } else {
         prop.setProperty("admin", "unknown (admin not set)");
-        prop.setProperty("maxSizeStr", "500k");
-        prop.setProperty("maxSizeBytes", "524288");
+        prop.setProperty("maxSizeStr", "5M");
+        prop.setProperty("maxSizeBytes", "5242880");
         prop.setProperty("dbDir", "/tmp");
         prop.setProperty("locked", "false")
       }

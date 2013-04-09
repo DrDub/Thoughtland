@@ -81,10 +81,10 @@ trait AnalysisAsFrames extends BasicVerbalizations {
 
     var frameCounter = 1;
     val allFrames: List[Frame] = List(makeCloudFrame(analysis.numberOfDimensions, analysis.numberOfComponents)) ++
-      (1.to(analysis.numberOfDimensions).map(makeComponent(_, analysis.findings)) ++
+      (1.to(analysis.numberOfComponents).map(makeComponent(_, analysis.findings)) ++
         analysis.findings.filter(_.isInstanceOf[ComponentDistance]).map(makeDistance(_)))./:(List[Frame]())(_ ++ _);
 
-    //    System.out.println(allFrames)
+    System.out.println(allFrames)
 
     val nameToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
 
