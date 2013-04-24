@@ -42,6 +42,11 @@ trait AnalysisAsFrames extends BasicVerbalizations {
 
   val ontology: RDFOntology
 
+  /**
+   * Given the component and the findings, produce a string name for it (not necessarily unique).
+   */
+  def chooseComponentName(component: Int, findings: List[Finding]): String
+
   def analysisToFrameSet(analysis: Analysis): FrameSet = new FrameSet() {
 
     case class MyFrame(id: String, _type: String) extends Frame {
@@ -80,13 +85,12 @@ trait AnalysisAsFrames extends BasicVerbalizations {
     }
 
     var frameCounter = 1;
+    val frameNames = new scala.collection.mutable.HashSet[String]
     val allFrames: List[Frame] = List(makeCloudFrame(analysis.numberOfDimensions, analysis.numberOfComponents)) ++
       (1.to(analysis.numberOfComponents).map(makeComponent(_, analysis.findings)) ++
         analysis.findings.filter(_.isInstanceOf[ComponentDistance]).map(makeDistance(_)))./:(List[Frame]())(_ ++ _);
 
-    System.out.println(allFrames)
-
-    val nameToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
+    val idToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
 
     allFrames.foreach {
       frame =>
@@ -99,7 +103,7 @@ trait AnalysisAsFrames extends BasicVerbalizations {
                 myframe.map += key -> myframe.map(key).map {
                   obj =>
                     obj match {
-                      case FrameRef(name) => nameToFrame(name)
+                      case FrameRef(id) => idToFrame(id)
                       case other => other
                     }
                 }
@@ -120,7 +124,15 @@ trait AnalysisAsFrames extends BasicVerbalizations {
       var rest: List[Frame] = List()
       val first = MyFrame(s"component-$component", "c-n-ball").set {
         m =>
-          m += "name" -> List(numToStr(component));
+          val baseName = chooseComponentName(component, findings)
+          var suffixCounter = 1;
+          var potentialName = baseName
+          while (frameNames.contains(potentialName)) {
+            suffixCounter += 1;
+            potentialName = s"$baseName$suffixCounter"
+          }
+          frameNames += potentialName
+          m += "name" -> List(potentialName);
           def makeAttribute(typeName: String, magnitude: RelativeMagnitude.RelativeMagnitude): Frame = {
             val magnitudeFrame = MyFrame(s"magnitude-$frameCounter", magnitude.typeStr)
             rest = rest ++ List(magnitudeFrame)
@@ -176,7 +188,7 @@ trait AnalysisAsFrames extends BasicVerbalizations {
         List(attributeFrame, magnitudeFrame)
     }
 
-    def getFrame(name: String): net.sf.openschema.Frame = nameToFrame.get(name).getOrElse(null)
+    def getFrame(name: String): net.sf.openschema.Frame = idToFrame.get(name).getOrElse(null)
     def getFrames(): java.util.Collection[net.sf.openschema.Frame] = allFrames
   }
 }

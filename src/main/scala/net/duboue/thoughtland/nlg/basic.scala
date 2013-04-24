@@ -63,4 +63,25 @@ trait BasicVerbalizations {
     case RelativeMagnitude.Small => "close to"
     case RelativeMagnitude.VerySmall => "very close to"
   }
+
+  val sizeBasedNames: Map[RelativeMagnitude.RelativeMagnitude, List[String]] =
+    Map(
+      RelativeMagnitude.VeryBig -> List("VeryBig", "Humongous", "Banging", "Thumping", "Whopping", "Walloping",
+        "Hercules", "Titan",
+        // giant breeds of dog http://en.wikipedia.org/wiki/Giant_dog_breed
+        "AmericanMastiff", "AnatolianShepherd", "BlackRussianTerrier", "Borzoi", "Bullmastiff", "CaucasianShepherdDog",
+        "DogueDeBordeaux", "EnglishMastiff", "EstrelaMountainDog", "GreatDane", "GreatPyrenees", "GreaterSwissMountainDog",
+        "IrishWolfhound", "KangalDog", "Komondor", "Kuvasz", "Leonberger", "NeapolitanMastiff", "Newfoundland",
+        "PyreneanMastiff", "ScottishDeerhound", "SpanishMastiff", "SaintBernard", "TibetanMastiff", "TosaInu", "TurkmenAlabai"),
+      RelativeMagnitude.Big -> List("Big", "Popeye", "Texas",
+        // large dog breeds, according to Google
+        "GermanShepherd", "Mastiff", "Rottweiler", "Akita", "BerneseMountain", "Doberman", "GoldenRetriever", "Bullmastiff"),
+      // normal size is tough
+      RelativeMagnitude.Medium -> List("Noticeable", "Goodly", "Manifest", "Tangible", "Visible", "Pronounced"),
+      // rest from here: http://www.dogsindepth.com/dog_breed_size_chart.html
+      RelativeMagnitude.Small -> List("Small",
+        "AlpineDachsbracke", "Aidi", "EskimoDog", "ShorthairedPinscher", "Basenji", "Beagle", "ChineseSharpei", "ChowChow",
+        "CockerSpaniel", "IrishTerrier", "ShibaInu"),
+      RelativeMagnitude.VerySmall -> List("Tiny",
+        "Chihuahua", "Havanese", "JapaneseChin", "Maltese", "Pekingese", "Pomeranian", "ShihTzu", "ToyPoodle"))
 }

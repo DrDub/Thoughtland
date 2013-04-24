@@ -50,6 +50,9 @@ import simplenlg.framework.CoordinatedPhraseElement
 import org.jgrapht.alg.BronKerboschCliqueFinder
 import org.jgrapht.graph.SimpleGraph
 import org.jgrapht.graph.DefaultEdge
+import net.duboue.thoughtland.Finding
+import net.duboue.thoughtland.ComponentSize
+import net.duboue.thoughtland.ComponentDensity
 
 class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerbalizations with DocumentPlansAsThoughtlandPlans {
 
@@ -73,6 +76,36 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
       return texts(0)
     else
       return texts(1)
+  }
+
+  /**
+   * Given the component and the findings, produce a string name for it (not necessarily unique).
+   */
+  def chooseComponentName(component: Int, findings: List[Finding]): String = {
+    val size = findings.filter({ f =>
+      f match {
+        case ComponentSize(c, _) => c == component;
+        case _ => false
+      }
+    }).headOption
+    val density = findings.filter({ f =>
+      f match {
+        case ComponentDensity(c, _) => c == component;
+        case _ => false
+      }
+    }).headOption
+    
+    def titleCase(s: String) = s(0).toUpper + s.substring(1)
+
+    val potentialNames = if (size.isDefined && density.isDefined)
+      sizeBasedNames(size.get.asInstanceOf[ComponentSize].size)
+    else if (size.isDefined)
+      sizeBasedNames(size.get.asInstanceOf[ComponentSize].size)
+    else if (density.isDefined)
+      List(titleCase(numToStr(component)))
+    else
+      List(titleCase(numToStr(component)))
+    potentialNames((Math.random() * potentialNames.length).toInt)
   }
 
   def verbalize(frames: FrameSet, plan: ThoughtlandPlan): GeneratedText = {

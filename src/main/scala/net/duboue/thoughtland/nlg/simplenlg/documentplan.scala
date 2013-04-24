@@ -75,11 +75,11 @@ class PlanClause(fd: java.util.Map[String, Object], frames: FrameSet) {
 
   def getObject(key: String): Object = fd.get(key)
 
-  def has(key: String): Boolean = fd.containsKey(key)
+  def contains(key: String): Boolean = fd.containsKey(key)
 
-  def hasDefined(key: String): Boolean = has(key) && getObject(key) != null
+  def isDefined(key: String): Boolean = contains(key) && getObject(key) != null
 
-  def hasTemplate() = has("template")
+  def hasTemplate() = contains("template")
 
   def templateClause(verbalize: Object => String): Sentence = {
     val template = getString("template");
@@ -93,7 +93,7 @@ class PlanClause(fd: java.util.Map[String, Object], frames: FrameSet) {
       val trimRest = if (i == fields.length - 1 && rest.endsWith("\"")) rest.substring(0,
         rest.length() - 1)
       else rest
-      if (hasDefined(key))
+      if (isDefined(key))
         instantiated.append(verbalize(getObject(key)));
 
       instantiated.append(trimRest);
