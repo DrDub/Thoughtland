@@ -53,6 +53,7 @@ import org.jgrapht.graph.DefaultEdge
 import net.duboue.thoughtland.Finding
 import net.duboue.thoughtland.ComponentSize
 import net.duboue.thoughtland.ComponentDensity
+import java.util.Locale
 
 class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerbalizations with DocumentPlansAsThoughtlandPlans {
 
@@ -81,7 +82,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
   /**
    * Given the component and the findings, produce a string name for it (not necessarily unique).
    */
-  def chooseComponentName(component: Int, findings: List[Finding]): String = {
+  def chooseComponentName(component: Int, findings: List[Finding], rnd: java.util.Random): String = {
     val size = findings.filter({ f =>
       f match {
         case ComponentSize(c, _) => c == component;
@@ -95,17 +96,17 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
       }
     }).headOption
     
-    def titleCase(s: String) = s(0).toUpper + s.substring(1)
+    def titleCase(s: String) = s(0).toUpper + s.substring(1).toLowerCase(Locale.ENGLISH)
 
     val potentialNames = if (size.isDefined && density.isDefined)
-      sizeBasedNames(size.get.asInstanceOf[ComponentSize].size)
+      densityBasedNames(density.get.asInstanceOf[ComponentDensity].density)
     else if (size.isDefined)
       sizeBasedNames(size.get.asInstanceOf[ComponentSize].size)
     else if (density.isDefined)
-      List(titleCase(numToStr(component)))
+      densityBasedNames(density.get.asInstanceOf[ComponentDensity].density)
     else
-      List(titleCase(numToStr(component)))
-    potentialNames((Math.random() * potentialNames.length).toInt)
+      List(numToStr(component))
+    titleCase(potentialNames(rnd.nextInt(potentialNames.length)))
   }
 
   def verbalize(frames: FrameSet, plan: ThoughtlandPlan): GeneratedText = {
@@ -118,9 +119,9 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
     }
     // template system for fall-back
     def verbalize(obj: Object): String =
-      obj match {
+      obj match {      
         case s: String => if (s.startsWith("\"")) s.substring(1, s.length() - 1) else s
-        case m: java.util.Map[String, Object] => {
+        case m: java.util.Map[String @unchecked, Object @unchecked] => {
           val fd = frames.getFrame(m.get("object-id").toString)
           if (ontology.isA(fd.getType(), "c-distance")) {
             val components = fd.get("component")

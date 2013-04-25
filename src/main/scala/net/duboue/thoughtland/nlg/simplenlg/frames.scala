@@ -45,7 +45,7 @@ trait AnalysisAsFrames extends BasicVerbalizations {
   /**
    * Given the component and the findings, produce a string name for it (not necessarily unique).
    */
-  def chooseComponentName(component: Int, findings: List[Finding]): String
+  def chooseComponentName(component: Int, findings: List[Finding], rnd: java.util.Random): String
 
   def analysisToFrameSet(analysis: Analysis): FrameSet = new FrameSet() {
 
@@ -84,6 +84,7 @@ trait AnalysisAsFrames extends BasicVerbalizations {
       def setType(x$1: Any): Unit = throw new UnsupportedOperationException();
     }
 
+    val nameRand = new java.util.Random(2711) // rnd generator for name chooser, to ensure consistent naming across runs
     var frameCounter = 1;
     val frameNames = new scala.collection.mutable.HashSet[String]
     val allFrames: List[Frame] = List(makeCloudFrame(analysis.numberOfDimensions, analysis.numberOfComponents)) ++
@@ -119,12 +120,12 @@ trait AnalysisAsFrames extends BasicVerbalizations {
           m += "dimensions" -> List[Object](numberOfDimensions.asInstanceOf[Object]);
           m += "component" -> (1.to(numberOfComponents).map { i => FrameRef(s"component-$i") }).toList
       }
-
+    
     def makeComponent(component: Int, findings: List[Finding]): List[Frame] = {
       var rest: List[Frame] = List()
       val first = MyFrame(s"component-$component", "c-n-ball").set {
         m =>
-          val baseName = chooseComponentName(component, findings)
+          val baseName = chooseComponentName(component, findings, nameRand)
           var suffixCounter = 1;
           var potentialName = baseName
           while (frameNames.contains(potentialName)) {

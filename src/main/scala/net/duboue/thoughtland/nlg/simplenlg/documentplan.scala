@@ -49,7 +49,7 @@ class PlanClause(fd: java.util.Map[String, Object], frames: FrameSet) {
         getFrame(fd, s)
       else
         frames.getFrame(s)
-      case m: java.util.Map[String, Object] =>
+      case m: java.util.Map[String @unchecked, Object @unchecked] =>
         frames.getFrame(m.get("object-id").toString)
     }
   }
@@ -60,7 +60,7 @@ class PlanClause(fd: java.util.Map[String, Object], frames: FrameSet) {
         getFrame(fd, s)
       else
         frames.getFrame(s)
-      case m: java.util.Map[String, Object] =>
+      case m: java.util.Map[String @unchecked, Object @unchecked] =>
         frames.getFrame(m.get("object-id").toString)
     }
   }

@@ -59,6 +59,6 @@ class SimpleNlgGeneratorTest {
     val generator = new SimpleNlgGenerator
     val generatedText = generator(analysis)
     System.out.println(generatedText);
-    assertEquals("Components four, one and two are all far from each other.", generatedText.paras(0).sent(3).text)
+    assertEquals("Components Four, Iridium and Whopping are all far from each other.", generatedText.paras(0).sent(3).text)
   }
 }

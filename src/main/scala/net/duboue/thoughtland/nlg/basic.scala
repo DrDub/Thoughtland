@@ -84,4 +84,12 @@ trait BasicVerbalizations {
         "CockerSpaniel", "IrishTerrier", "ShibaInu"),
       RelativeMagnitude.VerySmall -> List("Tiny",
         "Chihuahua", "Havanese", "JapaneseChin", "Maltese", "Pekingese", "Pomeranian", "ShihTzu", "ToyPoodle"))
+        
+  val densityBasedNames: Map[RelativeMagnitude.RelativeMagnitude, List[String]] =
+    Map(
+      RelativeMagnitude.VeryBig -> List("Uranium","Plutonium","Iridium","Platinum","Gold"),
+      RelativeMagnitude.Big -> List("Silver","Lead","Copper","Nickel"),
+      RelativeMagnitude.Medium -> List("Carbon","Silicon","Boron","Aluminium"),
+      RelativeMagnitude.Small -> List("Calcium","Magnesium","Potassium","Lithium"),
+      RelativeMagnitude.VerySmall -> List("Hydrogen","Helium","Neon","Nitrogen","Oxygen","Argon"))        
 }
