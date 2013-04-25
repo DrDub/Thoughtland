@@ -54,6 +54,7 @@ import net.duboue.thoughtland.Finding
 import net.duboue.thoughtland.ComponentSize
 import net.duboue.thoughtland.ComponentDensity
 import java.util.Locale
+import simplenlg.phrasespec.SPhraseSpec
 
 class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerbalizations with DocumentPlansAsThoughtlandPlans {
 
@@ -96,7 +97,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
         case _ => false
       }
     }).headOption
-    
+
     def titleCase(s: String) = s(0).toUpper + s.substring(1).toLowerCase(Locale.ENGLISH)
 
     val potentialNames = if (size.isDefined && density.isDefined)
@@ -112,6 +113,17 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
 
   def verbalize(frames: FrameSet, plan: ThoughtlandPlan): GeneratedText = {
     // helper functions
+    def componentNamesToNP(names: List[String]): NPPhraseSpec = names match {
+      case List(name) => nlgFactory.createNounPhrase(s"component $name")
+      case _ => {
+        val np = nlgFactory.createNounPhrase("component")
+        val c = nlgFactory.createCoordinatedPhrase()
+        names.map { nlgFactory.createNounPhrase(_) }.foreach { c.addCoordinate(_) }
+        np.addPostModifier(c)
+        np
+      }
+    }
+
     def typeStrToMagnitude(s: String) = RelativeMagnitude.values.filter(v => v.typeStr.equals(s)).head
     def verbalizeMagnitude(m: RelativeMagnitude.RelativeMagnitude)(implicit _type: String) = _type match {
       case "c-size" => sizeToStr(m)
@@ -120,7 +132,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
     }
     // template system for fall-back
     def verbalize(obj: Object): String =
-      obj match {      
+      obj match {
         case s: String => if (s.startsWith("\"")) s.substring(1, s.length() - 1) else s
         case m: java.util.Map[String @unchecked, Object @unchecked] => {
           val fd = frames.getFrame(m.get("object-id").toString)
@@ -161,10 +173,8 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
           val p = nlgFactory.createClause();
           p.setSubject("there");
           p.getSubject().setFeature("expletive_subject", false);
-          //              p.getObject().setFeature(Feature.RAISE_SPECIFIER, true)
           p.setVerb("be");
           p.getVerbPhrase().setRealisation("are");
-          //              p.setFeature(Feature.PASSIVE, true)
           p.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
           p.getVerb().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
           p.getVerbPhrase().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
@@ -226,6 +236,13 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                 pairsAtADistance(distance) += Pair(components(0), components(1))
             }
 
+            // see which distance is most popular and skip it
+            val mostPopular = pairsAtADistance.map { p => Pair(p._1, p._2.size) }./:("", 0)((best, current) =>
+              if (current._2 > best._2) current else best)
+            val hasMostPopular = mostPopular._2 > 0
+            if (hasMostPopular)
+              pairsAtADistance -= mostPopular._1
+
             // see if there are any full cliques at a given distance
             val cliquesAtADistance = pairsAtADistance.map {
               x =>
@@ -259,30 +276,22 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
             }
 
             // verbalize them
-            val cliqueSentences = cliquesAtADistance.map {
+            val cliqueSentences: List[SPhraseSpec] = cliquesAtADistance.map {
               p =>
                 p match {
                   case (distance, cliques) =>
                     var first = true
                     cliques.map {
                       clique =>
-                        val c = nlgFactory.createCoordinatedPhrase();
-                        clique.foreach {
-                          component =>
-                            c.addCoordinate(nlgFactory.createNounPhrase(component))
-                        }
-                        val np = nlgFactory.createNounPhrase("component")
-                        np.addPostModifier(c)
-                        val clause = nlgFactory.createClause(
-                          np, "be", "all")
+                        val clause = nlgFactory.createClause(componentNamesToNP(clique), "be", "all")
                         if (!first)
-                          clause.addModifier("also")
+                          clause.addComplement(nlgFactory.createAdverbPhrase("also"))
                         else
                           first = false
                         clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(distance)))
                         clause.addComplement("each other")
 
-                        Sentence(realiser.realiseSentence(clause))
+                        clause
                     }
                 }
             }.toList.flatten
@@ -290,34 +299,40 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
             // verbalize the rest
             //TODO order by component and find similarities
 
-            val restSentences = pairsAtADistance.map {
+            val restSentences: List[SPhraseSpec] = pairsAtADistance.map {
               x =>
                 x match {
                   case (distance, pairs) =>
                     var first = true
                     pairs.map {
                       pair =>
-                        val c = nlgFactory.createCoordinatedPhrase();
-                        c.addCoordinate(nlgFactory.createNounPhrase(pair._1))
-                        c.addCoordinate(nlgFactory.createNounPhrase(pair._2))
-                        val np = nlgFactory.createNounPhrase("component")
-                        np.addPostModifier(c)
-                        val clause = nlgFactory.createClause(
-                          np, "be", verbalizeMagnitude(typeStrToMagnitude(distance)))
+                        val clause = nlgFactory.createClause(componentNamesToNP(List(pair._1, pair._2)), "be")
                         if (!first)
-                          clause.addModifier("also")
+                          clause.addComplement(nlgFactory.createAdverbPhrase("also"))
                         else
                           first = false
+                        clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(distance)))
                         clause.addComplement("each other")
 
-                        Sentence(realiser.realiseSentence(clause))
+                        clause
                     }
                 }
             }.toList.flatten
 
             //val sorted = filtered.sortBy[String](clause => getVariable(clause, "pred2"));
 
-            cliqueSentences ++ restSentences
+            val mostPopularPhrase: List[SPhraseSpec] = if (hasMostPopular) {
+              val clause = nlgFactory.createClause("the rest", "be", "all");
+              clause.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+              clause.setVerb("be");
+              //              clause.getVerbPhrase().setRealisation("are");
+              clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(mostPopular._1)))
+              clause.addComplement("each other")
+              List(clause)
+            } else
+              List[SPhraseSpec]()
+
+            (cliqueSentences ++ restSentences ++ mostPopularPhrase).map { realiser.realiseSentence(_) }.map { Sentence(_) }
             //templateClauses(sorted.toList)
           }
 
@@ -325,31 +340,23 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
             // order them by magnitude value
             val sorted = aggrSegment.clauses.sortBy[String](clause => clause.getVariable("pred2"));
             val c = nlgFactory.createCoordinatedPhrase();
-            var current: Pair[List[NPPhraseSpec], RelativeMagnitude.RelativeMagnitude] = null;
+            var current: Pair[List[String], RelativeMagnitude.RelativeMagnitude] = null;
             // helper function, adds current component / magnitude to the coordinated phrase
             def addToPhrase() = if (current != null) {
               c.addCoordinate(
-                nlgFactory.createClause(
-                  if (current._1.size > 1) {
-                    val cc = new CoordinatedPhraseElement()
-                    current._1.foreach(cc.addCoordinate(_))
-                    cc
-                  } else
-                    current._1(0),
-                  "be", verbalizeMagnitude(current._2)))
+                nlgFactory.createClause(componentNamesToNP(current._1), "be", verbalizeMagnitude(current._2)))
             }
             sorted.foreach {
               clause =>
-                val np = nlgFactory.createNounPhrase("component " +
-                  clause.getFrame("pred0").get("name").head.toString)
+                val name = clause.getFrame("pred0").get("name").head.toString
                 val magnitude = typeStrToMagnitude(clause.getVariable("pred2"))
                 if (current == null)
-                  current = Pair(List(np), magnitude)
+                  current = Pair(List(name), magnitude)
                 else if (magnitude == current._2)
-                  current = Pair(current._1 ++ List(np), current._2)
+                  current = Pair(current._1 ++ List(name), current._2)
                 else {
                   addToPhrase
-                  current = Pair(List(np), magnitude)
+                  current = Pair(List(name), magnitude)
                 }
             }
             addToPhrase()
