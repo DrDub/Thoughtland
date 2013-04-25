@@ -66,7 +66,7 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
     case class WekaResults(points: Array[Double], expected: Double, returned: Double)
 
     //TODO move this to a parameter
-    val targetNumberOfPoints = 3;
+    val targetNumberOfPoints = 40;
 
     val numInstances = instances.numInstances()
 

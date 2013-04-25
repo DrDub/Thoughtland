@@ -68,6 +68,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
   val realiser = new Realiser(lexicon);
 
   def apply(analysis: Analysis)(implicit env: Environment): GeneratedText = {
+    System.out.println(analysis)
     val frames = analysisToFrameSet(analysis);
     val texts = List(byComponentSchema, byAttributeSchema)
       .map { _.instantiate(frames, new java.util.HashMap(), ontology) }

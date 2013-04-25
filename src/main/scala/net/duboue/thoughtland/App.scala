@@ -30,8 +30,11 @@ object App {
     val tmpDir = new File(File.createTempFile("thoughtland", "").getAbsolutePath() + ".dir")
     tmpDir.mkdirs()
 
-    val generated = ThoughtlandDriver("default").apply(TrainingData(new URI(args(0))), args(1),
-      args.drop(2), 500)(Environment(new File("/tmp"), tmpDir, Config(1, false)))
+    val driver = ThoughtlandDriver("default")
+    driver.writing = true
+
+    implicit val env = Environment(new File("/tmp"), tmpDir, Config(1, false))
+    val generated = driver(TrainingData(new URI(args(0))), args(1), args.drop(2), 500)
 
     System.out.println(generated)
     System.exit(0)

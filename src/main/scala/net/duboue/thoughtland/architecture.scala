@@ -53,6 +53,68 @@ trait Generator {
 
 // full system
 case class Thoughtland(extractor: CloudExtractor, clusterer: Clusterer, analyzer: ComponentAnalyzer, generator: Generator) {
-  def apply(data: TrainingData, algo: String, params: Array[String], numIter: Int)(implicit env: Environment): GeneratedText =
-    generator(analyzer(clusterer(extractor(data, algo, params), numIter)))
+
+  var writing: Boolean = false
+
+  def apply(data: TrainingData, algo: String, params: Array[String], numIter: Int)(implicit env: Environment): GeneratedText = {
+    val points = tee(extractor(data, algo, params))
+    val clusters = tee(clusterer(points, numIter))
+    val analysis = tee(analyzer(clusters))
+    val text = tee(generator(analysis))
+    text
+  }
+
+  def tee(points: CloudPoints): CloudPoints = {
+    if (writing)
+      try {
+        val pw = new java.io.PrintWriter(new java.io.FileWriter("points.tsv"))
+        points.points.foreach {
+          row =>
+            pw.println(row.toList.mkString("\t"))
+        }
+        pw.close();
+      } catch {
+        case ex: Exception => ex.printStackTrace()
+      }
+    points
+  }
+
+  def tee(components: Components): Components = {
+    if (writing)
+      try {
+        val pw = new java.io.PrintWriter(new java.io.FileWriter("components.tsv"))
+        (components.main :: components.parts).foreach {
+          component =>
+            pw.println(((component.coveredPoints :: component.center.toList) ::: component.radii.toList).mkString("\t"))
+        }
+        pw.close();
+      } catch {
+        case ex: Exception => ex.printStackTrace()
+      }
+    components
+  }
+
+  def tee(analysis: Analysis): Analysis = {
+    if (writing)
+      try {
+        val pw = new java.io.PrintWriter(new java.io.FileWriter("analysis.txt"))
+        pw.println(analysis)
+        pw.close();
+      } catch {
+        case ex: Exception => ex.printStackTrace()
+      }
+    analysis
+  }
+  def tee(text: GeneratedText): GeneratedText = {
+    if (writing)
+      try {
+        val pw = new java.io.PrintWriter(new java.io.FileWriter("text.txt"))
+        pw.println(text)
+        pw.close();
+      } catch {
+        case ex: Exception => ex.printStackTrace()
+      }
+    text
+  }
+
 }
