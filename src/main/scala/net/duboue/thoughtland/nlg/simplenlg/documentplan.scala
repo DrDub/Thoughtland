@@ -21,6 +21,7 @@ package net.duboue.thoughtland.nlg.simplenlg
 import net.sf.openschema.DocumentPlan
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.JavaConversions.mapAsScalaMap
+import scala.collection.JavaConversions.asScalaSet
 import net.sf.openschema.FrameSet
 import net.sf.openschema.Frame
 import net.duboue.thoughtland.Sentence
@@ -101,5 +102,28 @@ class PlanClause(fd: java.util.Map[String, Object], frames: FrameSet) {
     instantiated.append(".")
     Sentence(instantiated.toString())
   }
+  
+  override def toString(): String = {
+    val sb = new StringBuilder("PlanClause(")
+    toString(sb, fd)
+    sb.append(")")
+    sb.toString()
+  }
 
+  private def toString(sb: StringBuilder, fd: java.util.Map[String, Object]): Unit = {
+    var first = true;
+    for (e: java.util.Map.Entry[String, Object] <- fd.entrySet()) {
+      if(first)
+        first=false
+        else
+          sb.append(",\n")
+      sb.append(e.getKey()).append(" => ")
+      e.getValue() match {
+        case m: java.util.Map[String @unchecked, Object @unchecked] =>
+          sb.append("("); toString(sb, m); sb.append(")")
+        case o: Any =>
+          sb.append(o.toString)
+      }
+    }
+  }
 }

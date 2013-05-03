@@ -22,6 +22,7 @@ import net.duboue.thoughtland.CloudPoints
 import net.duboue.thoughtland.Environment
 import net.duboue.thoughtland.TrainingData
 import weka.classifiers.Classifier
+import weka.core.Capabilities.Capability
 
 /**
  * Extract an n-dimensional cloud of points where each point are the input attributes plus the error of a
@@ -33,9 +34,16 @@ class WekaErrorCloudExtractor extends WekaCrossValExtractor {
 
     return apply(data, algo, baseParams,
       { (classifier, testInstance, expected, actual) =>
+        val hasNumericClass = classifier.getCapabilities().handles(Capability.NUMERIC_CLASS)
         val array = testInstance.toDoubleArray()
-        val error = Math.abs(expected - actual)
-        array(testInstance.classIndex()) = error * error * 100
+        var i = 0
+        while(i<array.length){
+          if(array(i).isNaN())
+            array(i) = 0
+            i += 1
+        }
+        val error = if (hasNumericClass) Math.abs(expected - actual) else if (expected == actual) 0.0 else 1.0
+        array(testInstance.classIndex()) = error * error * 1000 //00
         array
       })
   }

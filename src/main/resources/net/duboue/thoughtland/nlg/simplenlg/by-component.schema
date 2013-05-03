@@ -26,15 +26,9 @@ predicate pred-component
   output
     template "There is a component @name."
     name       component.name
-    pred c-conjunction
-    0
-      pred has-component
-      pred0 cloud
-      pred1 component
-    1
-      pred attributive
-      pred0 component
-      pred1 name
+    pred attributive
+    pred0 component
+    pred1 name
 
 predicate pred-attribute
   variables

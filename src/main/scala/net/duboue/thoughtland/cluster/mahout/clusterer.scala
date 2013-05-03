@@ -86,9 +86,6 @@ class MahoutClusterer extends Clusterer {
     val mainIter = numIter / 10
 
     cluster(outputDir0, mainIter, 1)
-//    System.out.println("Main")
-    cluster(outputDir, numIter, 20)
-//    System.out.println("Cluster")
 
     def clusterToComponent(gaussian: GaussianCluster): Component = {
       implicit def vectorElemToDouble(v: Vector): Array[Double] =
@@ -99,6 +96,12 @@ class MahoutClusterer extends Clusterer {
     val mainComponent = clusterToComponent(new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir0,
       s"clusters-$mainIter-final"), PathType.LIST, PathFilters.logsCRCFilter(),
       conf).head.getSecond().getValue().asInstanceOf[GaussianCluster])
+      
+    System.out.println("Main radius: "+ mainComponent.radii.toList)
+
+//    System.out.println("Main")
+    cluster(outputDir, numIter, 20)
+//    System.out.println("Cluster")
 
     val parts = new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir,
       s"clusters-$numIter-final"), PathType.LIST, PathFilters.logsCRCFilter(), conf).map {

@@ -18,13 +18,22 @@
 
 package net.duboue.thoughtland.nlg.simplenlg
 
+import java.util.Locale
+
 import scala.collection.JavaConversions.asScalaBuffer
-import scala.collection.JavaConversions.mapAsScalaMap
-import scala.collection.JavaConversions.collectionAsScalaIterable
 import scala.collection.JavaConversions.asScalaSet
+import scala.collection.JavaConversions.collectionAsScalaIterable
+
+import org.jgrapht.alg.BronKerboschCliqueFinder
+import org.jgrapht.graph.DefaultEdge
+import org.jgrapht.graph.SimpleGraph
 import org.xml.sax.InputSource
+
 import net.duboue.thoughtland.Analysis
+import net.duboue.thoughtland.ComponentDensity
+import net.duboue.thoughtland.ComponentSize
 import net.duboue.thoughtland.Environment
+import net.duboue.thoughtland.Finding
 import net.duboue.thoughtland.GeneratedText
 import net.duboue.thoughtland.Generator
 import net.duboue.thoughtland.Paragraph
@@ -32,7 +41,6 @@ import net.duboue.thoughtland.RelativeMagnitude
 import net.duboue.thoughtland.RelativeMagnitude.valueToRelativeMagnitude
 import net.duboue.thoughtland.Sentence
 import net.duboue.thoughtland.nlg.BasicVerbalizations
-import net.sf.openschema.DocumentPlan
 import net.sf.openschema.Frame
 import net.sf.openschema.FrameSet
 import net.sf.openschema.GreedyChooser
@@ -42,19 +50,12 @@ import net.sf.openschema.SimpleFocusChooser
 import net.sf.openschema.util.SchemaToXmlFilterStream
 import simplenlg.features.Feature
 import simplenlg.features.NumberAgreement
+import simplenlg.framework.CoordinatedPhraseElement
 import simplenlg.framework.NLGFactory
 import simplenlg.lexicon.Lexicon
 import simplenlg.phrasespec.NPPhraseSpec
-import simplenlg.realiser.english.Realiser
-import simplenlg.framework.CoordinatedPhraseElement
-import org.jgrapht.alg.BronKerboschCliqueFinder
-import org.jgrapht.graph.SimpleGraph
-import org.jgrapht.graph.DefaultEdge
-import net.duboue.thoughtland.Finding
-import net.duboue.thoughtland.ComponentSize
-import net.duboue.thoughtland.ComponentDensity
-import java.util.Locale
 import simplenlg.phrasespec.SPhraseSpec
+import simplenlg.realiser.english.Realiser
 
 class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerbalizations with DocumentPlansAsThoughtlandPlans {
 
@@ -174,15 +175,13 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
           p.setSubject("there");
           p.getSubject().setFeature("expletive_subject", false);
           p.setVerb("be");
-          p.getVerbPhrase().setRealisation("are");
-          p.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
-          p.getVerb().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
-          p.getVerbPhrase().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
           val phrCom = nlgFactory.createNounPhrase("component");
           val numCom = Integer.parseInt(fd.getVariable2("0", "pred1"));
           phrCom.setSpecifier(numToStr(numCom));
-          if (numCom > 1)
+          if (numCom > 1) {
+            p.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
             phrCom.setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+          }
           val phrDim = nlgFactory.createNounPhrase("dimension");
           val numDim = Integer.parseInt(fd.getVariable2("1", "pred1"));
           phrDim.setSpecifier(numToStr(numDim));
