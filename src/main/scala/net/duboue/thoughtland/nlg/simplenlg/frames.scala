@@ -45,7 +45,7 @@ trait AnalysisAsFrames extends BasicVerbalizations {
   /**
    * Given the component and the findings, produce a string name for it (not necessarily unique).
    */
-  def chooseComponentName(component: Int, findings: List[Finding], rnd: java.util.Random): String
+  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String], rnd: java.util.Random): String
 
   def analysisToFrameSet(analysis: Analysis): FrameSet = new FrameSet() {
 
@@ -125,15 +125,9 @@ trait AnalysisAsFrames extends BasicVerbalizations {
       var rest: List[Frame] = List()
       val first = MyFrame(s"component-$component", "c-n-ball").set {
         m =>
-          val baseName = chooseComponentName(component, findings, nameRand)
-          var suffixCounter = 1;
-          var potentialName = baseName
-          while (frameNames.contains(potentialName)) {
-            suffixCounter += 1;
-            potentialName = s"$baseName$suffixCounter"
-          }
-          frameNames += potentialName
-          m += "name" -> List(potentialName);
+          val newName = chooseComponentName(component, findings, frameNames.toSet, nameRand)
+          frameNames += newName
+          m += "name" -> List(newName);
           def makeAttribute(typeName: String, magnitude: RelativeMagnitude.RelativeMagnitude): Frame = {
             val magnitudeFrame = MyFrame(s"magnitude-$frameCounter", magnitude.typeStr)
             rest = rest ++ List(magnitudeFrame)

@@ -85,7 +85,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
   /**
    * Given the component and the findings, produce a string name for it (not necessarily unique).
    */
-  def chooseComponentName(component: Int, findings: List[Finding], rnd: java.util.Random): String = {
+  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String], rnd: java.util.Random): String = {
     val size = findings.filter({ f =>
       f match {
         case ComponentSize(c, _) => c == component;
@@ -109,7 +109,20 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
       densityBasedNames(density.get.asInstanceOf[ComponentDensity].density)
     else
       List(numToStr(component))
-    titleCase(potentialNames(rnd.nextInt(potentialNames.length)))
+    val finalNames =
+      if (potentialNames.toSet.subsetOf(existingNames))
+        (existingNames -- potentialNames).toList
+      else
+        potentialNames // name will be repeated
+
+    val baseName = titleCase(finalNames(rnd.nextInt(finalNames.length)))
+    var suffixCounter = 1;
+    var potentialName = baseName
+    while (existingNames.contains(potentialName)) {
+      suffixCounter += 1;
+      potentialName = s"$baseName$suffixCounter"
+    }
+    potentialName
   }
 
   def verbalize(frames: FrameSet, plan: ThoughtlandPlan): GeneratedText = {
