@@ -48,7 +48,7 @@ class WekaCloudExtractorTest {
     }
 
     val extractor = new WekaCloudExtractor()
-    implicit val env = Environment(new File("."), new File("/tmp"), Config(1L, false))
+    implicit val env = Environment(new File("."), new File("/tmp"), Config(1L, false, false))
     val points = extractor(TrainingData(arff.toURI()), classOf[MultilayerPerceptron].getName(), Array("-c", "0", "-H", "3,2")).points
     val pointsPW = new java.io.PrintWriter(new java.io.File("/tmp/points2.csv"))
     try {

@@ -44,6 +44,6 @@ case class Sentence(text: String) {
   override def toString = text
 }
 
-case class Config(randomSeed: Long, storeResults: Boolean)
+case class Config(randomSeed: Long, storeResults: Boolean, useFunkyNames: Boolean)
 case class Environment(resultsDir: java.io.File, tmpDir: java.io.File, config: Config)
 

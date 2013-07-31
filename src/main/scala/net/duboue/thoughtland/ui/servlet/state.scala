@@ -47,8 +47,8 @@ object ServletState {
 
   var maxSize: Int = 0
   var locked: Boolean = true
-  val lockedAlgos = List("weka.classifiers.functions.MultilayerPerceptron",
-    "weka.classifiers.functions.SMOreg").toArray
+  var funkyNames: Boolean = true
+  val lockedAlgos = List("weka.classifiers.functions.MultilayerPerceptron", "weka.classifiers.functions.SMOreg").toArray
   val lockedParams = List("-H", "-c").toArray
 
   def init(fileName: Option[String]) {
@@ -61,10 +61,12 @@ object ServletState {
         prop.setProperty("maxSizeBytes", "5242880");
         prop.setProperty("dbDir", "/tmp");
         prop.setProperty("locked", "false")
+        prop.setProperty("funkyNames", "false")
       }
       dbDir = new File(prop.getProperty("dbDir"))
       maxSize = prop.getProperty("maxSizeBytes").toInt
       locked = prop.getProperty("locked").toBoolean
+      funkyNames = prop.getProperty("funkyNames").toBoolean
       load()
       // re-start queued and interrupted
       for (run <- runs)
@@ -76,6 +78,7 @@ object ServletState {
 
   def getMaxSize = maxSize
   def isLocked = locked
+  def useFunkyNames = funkyNames
   def getLockedAlgos = lockedAlgos
   def getLockedParams = lockedParams
   def getProperties = prop
@@ -255,6 +258,7 @@ object ServletState {
           .arg(outFile.toString)
           .arg(run.algo)
           .arg(run.numIter.toString)
+          .arg(useFunkyNames.toString)
         run.params.foreach { param => jvm.arg(param) }
 
         val process = jvm.launch(logStream, logStream)
@@ -307,10 +311,11 @@ object PipelineApp {
     val outFile = new File(args(3))
     val algo = args(4)
     val numIter = args(5).toInt
-    val params = args.drop(6)
+    val useFunkyNames = args(6).toBoolean
+    val params = args.drop(7)
 
     try {
-      implicit val env = Environment(dbDir, tmpDir, Config(1, false))
+      implicit val env = Environment(dbDir, tmpDir, Config(1, false, useFunkyNames))
       val generated = ThoughtlandDriver("default").apply(TrainingData(dataUri), algo,
         params, numIter)
 

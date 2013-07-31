@@ -45,9 +45,10 @@ trait AnalysisAsFrames extends BasicVerbalizations {
   /**
    * Given the component and the findings, produce a string name for it (not necessarily unique).
    */
-  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String], rnd: java.util.Random): String
+  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String], 
+      rnd: java.util.Random, useFunkyNames: Boolean): String
 
-  def analysisToFrameSet(analysis: Analysis): FrameSet = new FrameSet() {
+  def analysisToFrameSet(analysis: Analysis, useFunkyNames: Boolean): FrameSet = new FrameSet() {
 
     case class MyFrame(id: String, _type: String) extends Frame {
       val map: collection.mutable.Map[String, List[Object]] = new collection.mutable.HashMap[String, List[Object]]();
@@ -88,7 +89,7 @@ trait AnalysisAsFrames extends BasicVerbalizations {
     var frameCounter = 1;
     val frameNames = new scala.collection.mutable.HashSet[String]
     val allFrames: List[Frame] = List(makeCloudFrame(analysis.numberOfDimensions, analysis.numberOfComponents)) ++
-      (1.to(analysis.numberOfComponents).map(makeComponent(_, analysis.findings)) ++
+      (1.to(analysis.numberOfComponents).map(makeComponent(_, analysis.findings, useFunkyNames)) ++
         analysis.findings.filter(_.isInstanceOf[ComponentDistance]).map(makeDistance(_)))./:(List[Frame]())(_ ++ _);
 
     val idToFrame: Map[String, Frame] = allFrames.map { frame => (frame.getID(), frame) }.toMap;
@@ -121,11 +122,11 @@ trait AnalysisAsFrames extends BasicVerbalizations {
           m += "component" -> (1.to(numberOfComponents).map { i => FrameRef(s"component-$i") }).toList
       }
     
-    def makeComponent(component: Int, findings: List[Finding]): List[Frame] = {
+    def makeComponent(component: Int, findings: List[Finding], useFunkyNames: Boolean): List[Frame] = {
       var rest: List[Frame] = List()
       val first = MyFrame(s"component-$component", "c-n-ball").set {
         m =>
-          val newName = chooseComponentName(component, findings, frameNames.toSet, nameRand)
+          val newName = chooseComponentName(component, findings, frameNames.toSet, nameRand, useFunkyNames)
           frameNames += newName
           m += "name" -> List(newName);
           def makeAttribute(typeName: String, magnitude: RelativeMagnitude.RelativeMagnitude): Frame = {

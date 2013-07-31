@@ -71,12 +71,12 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
 
   def apply(analysis: Analysis)(implicit env: Environment): GeneratedText = {
     System.out.println(analysis)
-    val frames = analysisToFrameSet(analysis);
+    val frames = analysisToFrameSet(analysis, env.config.useFunkyNames);
     val texts = List(byComponentSchema, byAttributeSchema)
       .map { _.instantiate(frames, new java.util.HashMap(), ontology) }
       .map { asThoughtlandPlan(_, frames) }
       .map(verbalize(frames, _));
-    if (false) // TODO texts(0).toString.length < texts(1).toString.length)
+    if (true) // TODO texts(0).toString.length < texts(1).toString.length)
       return texts(0)
     else
       return texts(1)
@@ -85,7 +85,8 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
   /**
    * Given the component and the findings, produce a string name for it (not necessarily unique).
    */
-  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String], rnd: java.util.Random): String = {
+  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String], 
+      rnd: java.util.Random, useFunkyNames: Boolean): String = {
     val size = findings.filter({ f =>
       f match {
         case ComponentSize(c, _) => c == component;
@@ -101,14 +102,14 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
 
     def titleCase(s: String) = s(0).toUpper + s.substring(1).toLowerCase(Locale.ENGLISH)
 
-    val potentialNames = if (size.isDefined && density.isDefined)
+    val potentialNames = if (useFunkyNames && size.isDefined && density.isDefined)
       densityBasedNames(density.get.asInstanceOf[ComponentDensity].density)
-    else if (size.isDefined)
+    else if (useFunkyNames && size.isDefined)
       sizeBasedNames(size.get.asInstanceOf[ComponentSize].size)
-    else if (density.isDefined)
+    else if (useFunkyNames && density.isDefined)
       densityBasedNames(density.get.asInstanceOf[ComponentDensity].density)
     else
-      List(numToStr(component))
+      List(component.toString) //numToStr(component))
     val finalNames =
       if (potentialNames.toSet.subsetOf(existingNames))
         (existingNames -- potentialNames).toList
