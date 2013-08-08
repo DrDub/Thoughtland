@@ -85,8 +85,8 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
   /**
    * Given the component and the findings, produce a string name for it (not necessarily unique).
    */
-  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String], 
-      rnd: java.util.Random, useFunkyNames: Boolean): String = {
+  def chooseComponentName(component: Int, findings: List[Finding], existingNames: Set[String],
+    rnd: java.util.Random, useFunkyNames: Boolean): String = {
     val size = findings.filter({ f =>
       f match {
         case ComponentSize(c, _) => c == component;
@@ -177,8 +177,12 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
         else if (aggrSegment.clauses.forall(clause => clause.getString("pred").equals("has-attribute")))
           // all entries in aggregation set have the same attribute
           sentences = generateAttributeAggregatedSentences()
-        //TODO else, all about the same component
-        //TODO if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
+        else if (aggrSegment.clauses.map(clause => clause.getString("pred0"))
+          .foldLeft((null: String, true))((p, s) => if (p._2) (if (p._1 == null) (s, true) else (s, p._1.equals(s)))
+          else p)._2)
+          // else, all about the same component
+          // if all entries talk about the same entity, glue them together but keep an eye to mix with the next one
+          sentences = generateComponentAggregatedSentences()
         else
           // unknown, go template route
           sentences = templateClauses(aggrSegment.clauses.toList);
@@ -216,7 +220,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
             attributeSentences = generateNonDistanceAttributeAggregatedSentences();
 
           def generateDistanceAggregatedSentences() = {
-            // distances are a completely different animal, two strategies: 
+            // distances are a special sub-case, two strategies: 
             // (1) order by distance (components one, two and three are far from each other)
             // (2) order by component (component one is near all the other, 
             //     component two is close to component three)
@@ -332,13 +336,10 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                 }
             }.toList.flatten
 
-            //val sorted = filtered.sortBy[String](clause => getVariable(clause, "pred2"));
-
             val mostPopularPhrase: List[SPhraseSpec] = if (hasMostPopular) {
               val clause = nlgFactory.createClause("the rest", "be", "all");
               clause.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
               clause.setVerb("be");
-              //              clause.getVerbPhrase().setRealisation("are");
               clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(mostPopular._1)))
               clause.addComplement("each other")
               List(clause)
@@ -378,6 +379,106 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
           }
 
           attributeSentences
+        }
+
+        def generateComponentAggregatedSentences() = {
+          // component 1 is dense, big and at a good distance from components 2 and 3. It is far from component 4.
+          if (aggrSegment.clauses.length > 1) {
+
+            val current = aggrSegment.clauses(0).getFrame("pred0")
+            val name = current.get("name").head.toString
+
+            // Have a fixed order to search for information on the frames
+            //TODO order properly, density, size, distance
+            val sorted = aggrSegment.clauses
+              .filter(clause =>
+                clause.getFrame("pred1") != null &&
+                  clause.getFrame("pred1").getType != null &&
+                  !clause.getFrame("pred1").getType.toString.equals("c-distance"))
+              .sortBy[String](clause => clause.getFrame("pred1").getType().toString());
+            val distances = aggrSegment.clauses
+              .filter(clause =>
+                clause.getFrame("pred1") != null &&
+                  clause.getFrame("pred1").getType != null &&
+                  clause.getFrame("pred1").getType.toString.equals("c-distance"))
+              .sortBy[String](clause => clause.getFrame("pred0").get("name").head.toString);
+
+            (if (!sorted.isEmpty) {
+              val c = nlgFactory.createCoordinatedPhrase();
+              sorted.foreach {
+                clause =>
+                  val _type = clause.getFrame("pred1").getType.toString
+                  val magnitude = typeStrToMagnitude(clause.getVariable("pred2"))
+                  c.addCoordinate(nlgFactory.createNounPhrase(verbalizeMagnitude(magnitude)(_type)))
+              }
+              val s = nlgFactory.createClause(componentNamesToNP(List(name)), "be", c)
+
+              List(Sentence(realiser.realiseSentence(s)))
+            } else {
+              List()
+            }) ++ (if (!distances.isEmpty) {
+              // distance subsystem
+              // TODO unify both distance systems
+
+              // count for each magnitude, see if there's a most popular phrase
+              val atADistance = new scala.collection.mutable.HashMap[String, scala.collection.mutable.Buffer[String]]
+              distances.foreach {
+                clause =>
+                  val distance = clause.getVariable("pred2")
+                  val other = clause.getFrame("pred1").get("component").map {
+                    _.asInstanceOf[Frame].get("name").head.toString
+                  }.filter(n => !n.equals(name)).head
+                  if (!atADistance.contains(distance))
+                    atADistance += distance -> new scala.collection.mutable.ArrayBuffer[String]
+                  atADistance(distance) += other
+              }
+
+              val mostPopular = atADistance.map { p => Pair(p._1, p._2.size) }./:("", 0)((best, current) =>
+                if (current._2 > best._2) current else best)
+              val hasMostPopular = mostPopular._2 > 0
+              if (hasMostPopular)
+                atADistance -= mostPopular._1
+
+              var first = true
+              val distanceSentences: List[SPhraseSpec] = atADistance.map {
+                x =>
+                  x match {
+                    case (distance, others) =>
+                      val clause = nlgFactory.createClause("it", "be")
+                      if (!first)
+                        clause.addComplement(nlgFactory.createAdverbPhrase("also"))
+                      else
+                        first = false
+                      clause.addComplement(componentNamesToNP(others.toList))
+                      clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(distance))("c-distance"))
+                      // clause.addComplement(nlgFactory.createPrepositionPhrase("from", componentNamesToNP(others.toList)))
+
+                      clause
+                  }
+              }.toList
+
+              val mostPopularPhrase: List[SPhraseSpec] = if (hasMostPopular) {
+                val all = atADistance.isEmpty
+                val clause = nlgFactory.createClause(
+                  if (all) "all" else "the rest",
+                  "be", "all");
+                if (!all)
+                  clause.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+                clause.setVerb("be");
+                clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(mostPopular._1))("c-distance"))
+                clause.addComplement("it")
+                List(clause)
+              } else
+                List[SPhraseSpec]()
+
+              (distanceSentences ++ mostPopularPhrase).map { realiser.realiseSentence(_) }.map { Sentence(_) }
+
+            } else {
+              List()
+            })
+
+          } else
+            List()
         }
 
         sentences

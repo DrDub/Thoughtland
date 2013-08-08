@@ -44,7 +44,7 @@ predicate pred-attribute
     pred has-attribute
     pred0 component
     pred1 attribute
-    pred1 magnitude
+    pred2 magnitude
 
 ; schema starts here
 
