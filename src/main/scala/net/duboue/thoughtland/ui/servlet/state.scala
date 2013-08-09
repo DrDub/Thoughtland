@@ -204,7 +204,16 @@ object ServletState {
 
   def runStatus(id: Int): RunStatus = lock synchronized { runs(id).status }
 
-  def runDescription(id: Int) = lock.synchronized { runs(id).toString }
+  def runDescription(id: Int) = lock.synchronized {
+    val run = runs(id)
+    if (run.comment.isEmpty()) run.toString else run.comment
+  }
+
+  def runDescriptor(id: Int) = lock.synchronized { runs(id).toString }
+
+  def runAlgorithm(id: Int) = lock.synchronized { runs(id).algo }
+
+  def runAlgorithmParams(id: Int) = lock.synchronized { runs(id).params }
 
   def runLog(id: Int) = lock synchronized {
     runs(id).log
@@ -229,7 +238,7 @@ object ServletState {
     override def run() {
       while (true) {
         val id = taskQueue.take()
-//        System.err.println(s"Got id=$id")
+        //        System.err.println(s"Got id=$id")
         var run: Run = null
         lock.synchronized {
           val previous = runs(id)
@@ -251,7 +260,7 @@ object ServletState {
         }, true)
 
         val jvm = new JavaProcessBuilder();
-//        System.out.println(System.getProperty("java.class.path"))
+        //        System.out.println(System.getProperty("java.class.path"))
         jvm.classpath(System.getProperty("java.class.path"))
         jvm.maxHeap("6G")
         jvm.mainClass(PipelineApp.getClass.getName.replaceAll("\\$", "")) //classOf[PipelineApp].getName)// + "$")

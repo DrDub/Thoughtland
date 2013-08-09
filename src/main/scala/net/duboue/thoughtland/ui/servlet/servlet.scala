@@ -44,7 +44,10 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
 
     val id = params("id").toInt
     val status = ServletState.runStatus(id)
-    val t = "function(){ document.getElementById('last_paragraph').scrollIntoView() }";
+    val algo = ServletState.runAlgorithm(id)
+    val args = ServletState.runAlgorithmParams(id)
+    val desc = ServletState.runDescription(id)
+    val text = ServletState.runText(id)
     <html>
       <head>
         {
@@ -54,20 +57,39 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
       </head>
       <body>
         <h1> Run { id } </h1>
+        <p><a href="/">return</a></p>
         <p> Status: { status }  </p>
+        <p> Algorithm: { algo } </p>
+        <p> Arguments: { args } </p>
+        <p> Description: { desc } </p>
+        <p> { text } </p>
         <p> Log: </p>
         <ol>
           {
             for (line <- ServletState.runLog(id))
-              yield (if (!line.trim.isEmpty) <li><tt> { line } </tt></li> else <br/>)
+              yield (if (!line.trim.isEmpty) <li><tt> {
+              val parts = line.split("\\t", 2)
+              if (parts.length == 2)
+                <span>
+                  <small>{ parts(0) }</small>
+                  &nbsp; { parts(1) }
+                </span>
+              else { line }
+            } </tt></li>
+            else <br/>)
           }
         </ol>
         <p id="last_paragraph">
           <a name="last"> Status: { status }  </a>
         </p>
-        <script type="text/javascript">
-          window.setTimeout({ t } , 100);
-        </script>
+        {
+          if (status == RunStatus.RunOngoing)
+            <script type="text/javascript">
+              window.setTimeout({ "function(){ document.getElementById('last_paragraph').scrollIntoView() }" }
+              , 100);
+            </script>
+        }
+        <p><a href="/">return</a></p>
       </body>
     </html>
   }
@@ -82,7 +104,7 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
         case List() => List()
         case l :: List() => List()
         case l1 :: l2 :: ls => if (ServletState.lockedParams.contains(l1))
-          l1 :: l2.replaceAll("[^A-Za-z0-9.]", "") :: filterParams(ls)
+          l1 :: l2.replaceAll("[^A-Za-z0-9.,]", "") :: filterParams(ls)
         else
           filterParams(ls)
       }
