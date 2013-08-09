@@ -28,6 +28,7 @@ import org.scalatra.servlet.FileUploadSupport
 import org.scalatra.servlet.SizeConstraintExceededException
 import java.io.IOException
 import java.io.File
+import net.duboue.thoughtland.ui.servlet.ServletState.RunStatus
 
 class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
   error {
@@ -40,17 +41,34 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
   }
 
   get("/submission/:id") {
+
     val id = params("id").toInt
+    val status = ServletState.runStatus(id)
+    val t = "function(){ document.getElementById('last_paragraph').scrollIntoView() }";
     <html>
-      <h1> Run { id } </h1>
-      <p> Status: { ServletState.runStatus(id) }  </p>
-      <p> Log: </p>
-      <ol>
+      <head>
         {
-          for (line <- ServletState.runLog(id))
-            yield <li><tt> { line } </tt></li>
+          if (status == RunStatus.RunOngoing)
+            <meta http-equiv="refresh" content="2"></meta>
         }
-      </ol>
+      </head>
+      <body>
+        <h1> Run { id } </h1>
+        <p> Status: { status }  </p>
+        <p> Log: </p>
+        <ol>
+          {
+            for (line <- ServletState.runLog(id))
+              yield (if (!line.trim.isEmpty) <li><tt> { line } </tt></li> else <br/>)
+          }
+        </ol>
+        <p id="last_paragraph">
+          <a name="last">&nbsp;</a>
+        </p>
+        <script type="text/javascript">
+          window.setTimeout({ t } , 100);
+        </script>
+      </body>
     </html>
   }
 

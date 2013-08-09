@@ -84,7 +84,7 @@ administrator to have the file removed if you submit something by mistake).</p>
 <ol>
 <% for(int i=0; i<ServletState.runIds().length; i++) { %>
 
-<li><a href="tl/submission/<%= i %>"><%= ServletState.runDescription(i) %></a></li>
+<li><a href="tl/submission/<%= i %>#last"><%= ServletState.runDescription(i) %></a></li>
 
 <% } %>
 </ol>

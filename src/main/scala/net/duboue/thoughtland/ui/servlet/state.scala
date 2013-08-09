@@ -121,9 +121,11 @@ object ServletState {
     private def logFile = new File(dbDir, s"$prefix.log")
     def log(logLine: String) = lock synchronized {
       val pw = new PrintWriter(new FileWriter(logFile, true))
-      pw.print(new java.util.Date())
-      pw.print('\t')
-      pw.println(logLine)
+      if (!logLine.trim.isEmpty) {
+        pw.print(new java.util.Date())
+        pw.print('\t')
+        pw.println(logLine)
+      }
       pw.close
     }
 
@@ -227,7 +229,7 @@ object ServletState {
     override def run() {
       while (true) {
         val id = taskQueue.take()
-        System.err.println(s"Got id=$id")
+//        System.err.println(s"Got id=$id")
         var run: Run = null
         lock.synchronized {
           val previous = runs(id)
@@ -249,6 +251,7 @@ object ServletState {
         }, true)
 
         val jvm = new JavaProcessBuilder();
+//        System.out.println(System.getProperty("java.class.path"))
         jvm.classpath(System.getProperty("java.class.path"))
         jvm.maxHeap("2G")
         jvm.mainClass(PipelineApp.getClass.getName.replaceAll("\\$", "")) //classOf[PipelineApp].getName)// + "$")
