@@ -43,7 +43,7 @@ class WekaErrorCloudExtractor extends WekaCrossValExtractor {
             i += 1
         }
         val error = if (hasNumericClass) Math.abs(expected - actual) else if (expected == actual) 0.0 else 1.0
-        array(testInstance.classIndex()) = error * error * 1000 //00
+        array(testInstance.classIndex()) = error * error // * 1000 //00
         array
       })
   }
