@@ -76,7 +76,7 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
       .map { _.instantiate(frames, new java.util.HashMap(), ontology) }
       .map { asThoughtlandPlan(_, frames) }
       .map(verbalize(frames, _));
-    if (true) // TODO texts(0).toString.length < texts(1).toString.length)
+    if (texts(0).toString.length < texts(1).toString.length)
       return texts(0)
     else
       return texts(1)
@@ -383,14 +383,13 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
 
         def generateComponentAggregatedSentences() = {
           // component 1 is dense, big and at a good distance from components 2 and 3. It is far from component 4.
-          if (aggrSegment.clauses.length > 1) {
+          if (aggrSegment.clauses.length > 2) { // skip over "there is a component 1"
 
-            val current = aggrSegment.clauses(0).getFrame("pred0")
-            val name = current.get("name").head.toString
+            val name = aggrSegment.clauses(0).getFrame("pred0").get("name").head.toString
 
             // Have a fixed order to search for information on the frames
             //TODO order properly, density, size, distance
-            val sorted = aggrSegment.clauses
+            val attributes = aggrSegment.clauses
               .filter(clause =>
                 clause.getFrame("pred1") != null &&
                   clause.getFrame("pred1").getType != null &&
@@ -403,20 +402,18 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
                   clause.getFrame("pred1").getType.toString.equals("c-distance"))
               .sortBy[String](clause => clause.getFrame("pred0").get("name").head.toString);
 
-            (if (!sorted.isEmpty) {
-              val c = nlgFactory.createCoordinatedPhrase();
-              sorted.foreach {
-                clause =>
-                  val _type = clause.getFrame("pred1").getType.toString
-                  val magnitude = typeStrToMagnitude(clause.getVariable("pred2"))
-                  c.addCoordinate(nlgFactory.createNounPhrase(verbalizeMagnitude(magnitude)(_type)))
-              }
-              val s = nlgFactory.createClause(componentNamesToNP(List(name)), "be", c)
-
-              List(Sentence(realiser.realiseSentence(s)))
-            } else {
-              List()
-            }) ++ (if (!distances.isEmpty) {
+            var currentCoord = nlgFactory.createCoordinatedPhrase()
+            var currentPhrase: SPhraseSpec = nlgFactory.createClause(componentNamesToNP(List(name)), "be", currentCoord)
+            var emptyPhrase = true
+            val toRealise = new scala.collection.mutable.ArrayBuffer[SPhraseSpec]
+            attributes.foreach {
+              clause =>
+                val _type = clause.getFrame("pred1").getType.toString
+                val magnitude = typeStrToMagnitude(clause.getVariable("pred2"))
+                currentCoord.addCoordinate(nlgFactory.createNounPhrase(verbalizeMagnitude(magnitude)(_type)))
+                emptyPhrase = false
+            }
+            if (!distances.isEmpty) {
               // distance subsystem
               // TODO unify both distance systems
 
@@ -439,44 +436,60 @@ class SimpleNlgGenerator extends Generator with AnalysisAsFrames with BasicVerba
               if (hasMostPopular)
                 atADistance -= mostPopular._1
 
-              var first = true
-              val distanceSentences: List[SPhraseSpec] = atADistance.map {
+              atADistance.foreach {
                 x =>
                   x match {
                     case (distance, others) =>
-                      val clause = nlgFactory.createClause("it", "be")
-                      if (!first)
-                        clause.addComplement(nlgFactory.createAdverbPhrase("also"))
-                      else
-                        first = false
-                      clause.addComplement(componentNamesToNP(others.toList))
-                      clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(distance))("c-distance"))
-                      // clause.addComplement(nlgFactory.createPrepositionPhrase("from", componentNamesToNP(others.toList)))
+                      val outputNow = !emptyPhrase
+                      val also = !toRealise.isEmpty
 
-                      clause
+                      //TODO this is a template
+                      currentCoord.addCoordinate(verbalizeMagnitude(typeStrToMagnitude(distance))("c-distance") + " " +
+                        realiser.realise(componentNamesToNP(others.toList)))
+                      emptyPhrase = false
+
+                      if (also)
+                        currentPhrase.addComplement(nlgFactory.createAdverbPhrase("also"))
+
+                      if (outputNow) {
+                        toRealise += currentPhrase
+                        currentCoord = nlgFactory.createCoordinatedPhrase()
+                        currentPhrase = nlgFactory.createClause("it", "be", currentCoord)
+                        emptyPhrase = true
+                      }
                   }
-              }.toList
+              }
 
-              val mostPopularPhrase: List[SPhraseSpec] = if (hasMostPopular) {
+              if (hasMostPopular) {
+                if (!emptyPhrase) {
+                  toRealise += currentPhrase
+
+                  currentCoord = nlgFactory.createCoordinatedPhrase()
+                  currentPhrase = nlgFactory.createClause("it", "be", currentCoord)
+                  emptyPhrase = true
+                }
                 val all = atADistance.isEmpty
-                val clause = nlgFactory.createClause(
-                  if (all) "all" else "the rest",
+                val clause = if (all) nlgFactory.createClause(
+                  "all components",
+                  "be")
+                else nlgFactory.createClause(
+                  "the rest",
                   "be", "all");
-                if (!all)
-                  clause.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
+                clause.getSubject().setFeature(Feature.NUMBER, NumberAgreement.PLURAL);
                 clause.setVerb("be");
-                clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(mostPopular._1))("c-distance"))
-                clause.addComplement("it")
-                List(clause)
-              } else
-                List[SPhraseSpec]()
-
-              (distanceSentences ++ mostPopularPhrase).map { realiser.realiseSentence(_) }.map { Sentence(_) }
-
-            } else {
-              List()
-            })
-
+                //TODO this is a template
+                clause.addComplement(verbalizeMagnitude(typeStrToMagnitude(mostPopular._1))("c-distance") + " " +
+                  (if (toRealise.isEmpty)
+                    realiser.realise(componentNamesToNP(List(name)))
+                  else
+                    "it"))
+                toRealise += clause
+              }
+            }
+            if (!emptyPhrase) {
+              toRealise += currentPhrase
+            }
+            toRealise.toList.map { realiser.realiseSentence(_) }.map { Sentence(_) }
           } else
             List()
         }
