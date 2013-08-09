@@ -33,6 +33,21 @@ div#main {
   top: 200px;
 }
 
+label {
+	font-weight: bold;
+}
+
+dl {
+  padding-left: 100px;
+}
+dt {
+	font-weight: bold;
+}
+dd {
+	background:none no-repeat left top;
+	padding-left: -40px;
+	
+}
   
 table.tab{
   	text-align: left;

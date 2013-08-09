@@ -253,7 +253,7 @@ object ServletState {
         val jvm = new JavaProcessBuilder();
 //        System.out.println(System.getProperty("java.class.path"))
         jvm.classpath(System.getProperty("java.class.path"))
-        jvm.maxHeap("2G")
+        jvm.maxHeap("6G")
         jvm.mainClass(PipelineApp.getClass.getName.replaceAll("\\$", "")) //classOf[PipelineApp].getName)// + "$")
         jvm.arg(new File(dbDir, s"${run.prefix}.arff").toURI.toString)
           .arg(dbDir.toString)

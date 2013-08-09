@@ -38,7 +38,8 @@ distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0
 
 <form action="/tl/submission/new" method="POST" enctype="multipart/form-data">
 
-<p>Algorithm to use: <input type="text" size="50" name="algo"></input>
+<p><label>Algorithm to use</label>:<br/>
+<input type="text" size="100" name="algo"></input>
 <% if(ServletState.isLocked()) { %>
 <br><i>This is a public server, only the following algorithms are accepted:</i><br>
 <ul>
@@ -48,7 +49,8 @@ distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0
 </ul>
 <% } %>
 </p>
-<p>Algorithm parameters: <input type="text" size="100" name="params"></input>
+<p><label>Algorithm parameters</label>:<br/>
+<input type="text" size="100" name="params"></input>
 <% if(ServletState.isLocked()) { %>
 <br><i>This is a public server, only the following parameters are accepted:</i><br>
 <ul>
@@ -59,20 +61,22 @@ distributed under the terms of the <a href="http://www.gnu.org/licenses/agpl-3.0
 <% } %>
 </p>
 
-<p>Submit a Weka ARFF file for analysis (maximum <%= ServletState.getProperties().getProperty("maxSizeStr") %>):<br> <input type="file" name="upload_file"> </p>
+<p><label>Submit a Weka ARFF file for analysis</label> 
+(maximum <%= ServletState.getProperties().getProperty("maxSizeStr") %>):<br/> 
+<input type="file" name="upload_file"> </p>
 
 <p>Please note, in a public server everybody will be able to access (and download) your submission (contact the 
 administrator to have the file removed if you submit something by mistake).</p>
 
-<p>How do you want to be identified (alias, name, Twitter handle, email, leave blank for anonymous):<br>
-<input type="text" size="50" name="name"></input>
+<p><label>How do you want to be identified</label> (alias, name, Twitter handle, email, leave blank for anonymous):<br/>
+<input type="text" size="100" name="name"></input>
 </p>
 
-<p>Any extra text to be associated with the submission (for example, where did the file came from):<br>
+<p><label>Any extra text to be associated with the submission</label> (for example, where did the file came from):<br/>
 <textarea rows="10" cols="80" name="extra"></textarea>
 </p>
 
-<p>Any private comments to the administrator (for example, say hi):<br>
+<p><label>Any private comments to the administrator</label> (for example, say hi):<br/>
 <textarea rows="10" cols="80" name="private"></textarea>
 </p>
 

@@ -63,7 +63,7 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
           }
         </ol>
         <p id="last_paragraph">
-          <a name="last">&nbsp;</a>
+          <a name="last"> Status: { status }  </a>
         </p>
         <script type="text/javascript">
           window.setTimeout({ t } , 100);
