@@ -16,8 +16,7 @@ Thoughtland is a four stages pipeline:
 Building Thoughtland
 --------------------
 
-Thoughtland uses Maven but you will need to deploy locally some dependencies that haven't made their way into Central
-yet.
+Thoughtland uses Maven but you will need to deploy locally some dependencies that haven't made their way into Central yet.
 
 They are:
 
@@ -51,7 +50,7 @@ Running Thoughtland
 
 mvn clean compile assembly:single
 
-java -jar target/thoughtland-0.0.1-SNAPSHOT-jar-with-dependencies.jar
+java -jar /full/path/to/project/target/thoughtland-0.0.1-SNAPSHOT-jar-with-dependencies.jar
 
 should start a web-browser at http://localhost:7071
 
