@@ -128,7 +128,7 @@ abstract class WekaCrossValExtractor extends CloudExtractor {
             }
 
             val left = leftOverTasks.decrementAndGet()
-            System.out.println("Done " + idx + " left " + left)
+            System.out.println("Done fold " + idx + " left " + left)
             if (left == 0)
               lock.synchronized {
                 lock.notifyAll()

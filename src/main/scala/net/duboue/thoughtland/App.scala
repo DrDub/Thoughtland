@@ -33,7 +33,7 @@ object App {
     val driver = ThoughtlandDriver("default")
     driver.writing = true
 
-    implicit val env = Environment(new File("/tmp"), tmpDir, Config(1, false))
+    implicit val env = Environment(new File("/tmp"), tmpDir, Config(1, false, false))
     val generated = driver(TrainingData(new URI(args(0))), args(1), args.drop(2), 1000)
 
     System.out.println(generated)

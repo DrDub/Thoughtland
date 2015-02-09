@@ -47,8 +47,8 @@ object ServletState {
 
   var maxSize: Int = 0
   var locked: Boolean = true
-  val lockedAlgos = List("weka.classifiers.functions.MultilayerPerceptron",
-    "weka.classifiers.functions.SMOreg").toArray
+  var funkyNames: Boolean = true
+  val lockedAlgos = List("weka.classifiers.functions.MultilayerPerceptron", "weka.classifiers.functions.SMOreg").toArray
   val lockedParams = List("-H", "-c").toArray
 
   def init(fileName: Option[String]) {
@@ -61,10 +61,12 @@ object ServletState {
         prop.setProperty("maxSizeBytes", "5242880");
         prop.setProperty("dbDir", "/tmp");
         prop.setProperty("locked", "false")
+        prop.setProperty("funkyNames", "false")
       }
       dbDir = new File(prop.getProperty("dbDir"))
       maxSize = prop.getProperty("maxSizeBytes").toInt
       locked = prop.getProperty("locked").toBoolean
+      funkyNames = prop.getProperty("funkyNames").toBoolean
       load()
       // re-start queued and interrupted
       for (run <- runs)
@@ -76,6 +78,7 @@ object ServletState {
 
   def getMaxSize = maxSize
   def isLocked = locked
+  def useFunkyNames = funkyNames
   def getLockedAlgos = lockedAlgos
   def getLockedParams = lockedParams
   def getProperties = prop
@@ -118,9 +121,11 @@ object ServletState {
     private def logFile = new File(dbDir, s"$prefix.log")
     def log(logLine: String) = lock synchronized {
       val pw = new PrintWriter(new FileWriter(logFile, true))
-      pw.print(new java.util.Date())
-      pw.print('\t')
-      pw.println(logLine)
+      if (!logLine.trim.isEmpty) {
+        pw.print(new java.util.Date())
+        pw.print('\t')
+        pw.println(logLine)
+      }
       pw.close
     }
 
@@ -147,12 +152,12 @@ object ServletState {
       prop.setProperty("params", params.map { _.replaceAll("\t", " ") }.mkString("\t"))
       prop.setProperty("num_iter", s"$numIter")
       val f = new FileOutputStream(new File(dbDir, s"$prefix.properties"))
-      prop.save(f, toString)
+      prop.store(f, toString)
       f.close
       log("Created")
     }
 
-    private def loadProperties = lock synchronized {
+    private def loadProperties() = lock synchronized {
       val prop = new Properties
       val reader = new FileReader(new File(dbDir, s"$prefix.properties"))
       prop.load(reader)
@@ -199,7 +204,16 @@ object ServletState {
 
   def runStatus(id: Int): RunStatus = lock synchronized { runs(id).status }
 
-  def runDescription(id: Int) = lock.synchronized { runs(id).toString }
+  def runDescription(id: Int) = lock.synchronized {
+    val run = runs(id)
+    if (run.comment.isEmpty()) run.toString else run.comment
+  }
+
+  def runDescriptor(id: Int) = lock.synchronized { runs(id).toString }
+
+  def runAlgorithm(id: Int) = lock.synchronized { runs(id).algo }
+
+  def runAlgorithmParams(id: Int) = lock.synchronized { runs(id).params }
 
   def runLog(id: Int) = lock synchronized {
     runs(id).log
@@ -224,7 +238,7 @@ object ServletState {
     override def run() {
       while (true) {
         val id = taskQueue.take()
-        System.err.println(s"Got id=$id")
+        //        System.err.println(s"Got id=$id")
         var run: Run = null
         lock.synchronized {
           val previous = runs(id)
@@ -246,8 +260,9 @@ object ServletState {
         }, true)
 
         val jvm = new JavaProcessBuilder();
+        //        System.out.println(System.getProperty("java.class.path"))
         jvm.classpath(System.getProperty("java.class.path"))
-        jvm.maxHeap("2G")
+        jvm.maxHeap("6G")
         jvm.mainClass(PipelineApp.getClass.getName.replaceAll("\\$", "")) //classOf[PipelineApp].getName)// + "$")
         jvm.arg(new File(dbDir, s"${run.prefix}.arff").toURI.toString)
           .arg(dbDir.toString)
@@ -255,6 +270,7 @@ object ServletState {
           .arg(outFile.toString)
           .arg(run.algo)
           .arg(run.numIter.toString)
+          .arg(useFunkyNames.toString)
         run.params.foreach { param => jvm.arg(param) }
 
         val process = jvm.launch(logStream, logStream)
@@ -307,10 +323,11 @@ object PipelineApp {
     val outFile = new File(args(3))
     val algo = args(4)
     val numIter = args(5).toInt
-    val params = args.drop(6)
+    val useFunkyNames = args(6).toBoolean
+    val params = args.drop(7)
 
     try {
-      implicit val env = Environment(dbDir, tmpDir, Config(1, false))
+      implicit val env = Environment(dbDir, tmpDir, Config(1, false, useFunkyNames))
       val generated = ThoughtlandDriver("default").apply(TrainingData(dataUri), algo,
         params, numIter)
 

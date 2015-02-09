@@ -28,6 +28,7 @@ import org.scalatra.servlet.FileUploadSupport
 import org.scalatra.servlet.SizeConstraintExceededException
 import java.io.IOException
 import java.io.File
+import net.duboue.thoughtland.ui.servlet.ServletState.RunStatus
 
 class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
   error {
@@ -40,17 +41,56 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
   }
 
   get("/submission/:id") {
+
     val id = params("id").toInt
+    val status = ServletState.runStatus(id)
+    val algo = ServletState.runAlgorithm(id)
+    val args = ServletState.runAlgorithmParams(id)
+    val desc = ServletState.runDescription(id)
+    val text = ServletState.runText(id)
     <html>
-      <h1> Run { id } </h1>
-      <p> Status: { ServletState.runStatus(id) }  </p>
-      <p> Log: </p>
-      <ol>
+      <head>
         {
-          for (line <- ServletState.runLog(id))
-            yield <li><tt> { line } </tt></li>
+          if (status == RunStatus.RunOngoing)
+            <meta http-equiv="refresh" content="2"></meta>
         }
-      </ol>
+      </head>
+      <body>
+        <h1> Run { id } </h1>
+        <p><a href="/">return</a></p>
+        <p> Status: { status }  </p>
+        <p> Algorithm: { algo } </p>
+        <p> Arguments: { args } </p>
+        <p> Description: { desc } </p>
+        <p> { text } </p>
+        <p> Log: </p>
+        <ol>
+          {
+            for (line <- ServletState.runLog(id))
+              yield (if (!line.trim.isEmpty) <li><tt> {
+              val parts = line.split("\\t", 2)
+              if (parts.length == 2)
+                <span>
+                  <small>{ parts(0) }</small>
+                  &nbsp; { parts(1) }
+                </span>
+              else { line }
+            } </tt></li>
+            else <br/>)
+          }
+        </ol>
+        <p id="last_paragraph">
+          <a name="last"> Status: { status }  </a>
+        </p>
+        {
+          if (status == RunStatus.RunOngoing)
+            <script type="text/javascript">
+              window.setTimeout({ "function(){ document.getElementById('last_paragraph').scrollIntoView() }" }
+              , 100);
+            </script>
+        }
+        <p><a href="/">return</a></p>
+      </body>
     </html>
   }
 
@@ -64,7 +104,7 @@ class ThoughtlandServlet extends ScalatraServlet with FileUploadSupport {
         case List() => List()
         case l :: List() => List()
         case l1 :: l2 :: ls => if (ServletState.lockedParams.contains(l1))
-          l1 :: l2.replaceAll("[^A-Za-z0-9.]", "") :: filterParams(ls)
+          l1 :: l2.replaceAll("[^A-Za-z0-9.,]", "") :: filterParams(ls)
         else
           filterParams(ls)
       }

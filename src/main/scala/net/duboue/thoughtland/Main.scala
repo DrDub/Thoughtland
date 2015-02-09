@@ -36,7 +36,8 @@ object Main {
 
     val context = new WebAppContext()
     context.setContextPath("/")
-    context.setResourceBase("src/main/webapp")
+    val webDir = Main.getClass().getClassLoader().getResource("net/duboue/thoughtland/webapp").toExternalForm();
+    context.setResourceBase(webDir); //"src/main/resources/net/duboue/thoughtland/webapp")
     val thoughtlandServlet = new ServletHolder(new ThoughtlandServlet());
     thoughtlandServlet.getRegistration().setMultipartConfig(new MultipartConfigElement("/tmp", ServletState.maxSize,
       ServletState.maxSize, 2 * ServletState.maxSize));

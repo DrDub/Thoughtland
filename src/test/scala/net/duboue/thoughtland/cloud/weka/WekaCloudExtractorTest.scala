@@ -31,7 +31,7 @@ import weka.classifiers.functions.MultilayerPerceptron
 class WekaCloudExtractorTest {
 
   @Test
-  def testCloudGeneration = {
+  def testCloudGeneration() = {
     val stream = new java.io.BufferedReader(new java.io.InputStreamReader(classOf[WekaCloudExtractorTest].getResourceAsStream("auto-mpg.arff")))
     val arff = File.createTempFile("auto-mpg", ".arff")
     arff.deleteOnExit()
@@ -48,7 +48,7 @@ class WekaCloudExtractorTest {
     }
 
     val extractor = new WekaCloudExtractor()
-    implicit val env = Environment(new File("."), new File("/tmp"), Config(1L, false))
+    implicit val env = Environment(new File("."), new File("/tmp"), Config(1L, false, false))
     val points = extractor(TrainingData(arff.toURI()), classOf[MultilayerPerceptron].getName(), Array("-c", "0", "-H", "3,2")).points
     val pointsPW = new java.io.PrintWriter(new java.io.File("/tmp/points2.csv"))
     try {

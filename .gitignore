@@ -37,3 +37,4 @@ build.log
 #  ^\.pc/
 
 .cache
+/bin/

@@ -33,12 +33,12 @@ import net.duboue.thoughtland.nlg.template.TemplateGenerator
 @Test
 class SimpleNlgGeneratorTest {
   @Test
-  def testSimpleNlgGeneration = {
+  def testSimpleNlgGeneration() = {
     import RelativeMagnitude._
     val analysis = Analysis(3, 8, List(ComponentSize(0, Small), ComponentDensity(0, VeryBig),
       ComponentDistance(0, 1, Big), ComponentDistance(0, 2, Big), ComponentSize(1, Small),
       ComponentDensity(1, VeryBig), ComponentDistance(1, 2, Medium), ComponentSize(2, VeryBig)))
-    implicit val env = Environment(null, null, Config(1L, false))
+    implicit val env = Environment(null, null, Config(1L, false, false))
     val generator = new SimpleNlgGenerator
     val generatedText = generator(analysis)
     assertEquals("There are three components and eight dimensions.", generatedText.paras(0).sent(0).text)
@@ -47,7 +47,7 @@ class SimpleNlgGeneratorTest {
   }
 
   @Test
-  def testSimpleNlgGeneration2 = {
+  def testSimpleNlgGeneration2() = {
     import RelativeMagnitude._
     val analysis = Analysis(4, 8, List(ComponentSize(0, Small), ComponentDensity(0, VeryBig),
       ComponentDistance(0, 1, Big), ComponentDistance(0, 2, Big), ComponentSize(1, Small),
@@ -55,10 +55,10 @@ class SimpleNlgGeneratorTest {
       ComponentDistance(1, 3, Big),
       ComponentDistance(0, 3, Big),
       ComponentSize(2, VeryBig)))
-    implicit val env = Environment(null, null, Config(1L, false))
+    implicit val env = Environment(null, null, Config(1L, false, false))
     val generator = new SimpleNlgGenerator
     val generatedText = generator(analysis)
     System.out.println(generatedText);
-    assertEquals("Components Three and Whopping are at a good distance from each other.", generatedText.paras(0).sent(3).text)
+    assertEquals("Components 2 and 3 are at a good distance from each other.", generatedText.paras(0).sent(3).text)
   }
 }

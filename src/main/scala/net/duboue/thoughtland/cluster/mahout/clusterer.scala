@@ -53,28 +53,30 @@ class MahoutClusterer extends Clusterer {
     RandomUtils.useTestSeed()
 
     // turn the numbers into vectors
-    val vectors = cloud.points.map { d => new DenseVector(d, true) }
+    val vectors0 = cloud.points.map { d => new DenseVector(d, true) }
 
     val conf = new Configuration()
     val fs = FileSystem.getLocal(conf)
     val valbaseDir = new Path(env.tmpDir.toURI())
+    val seqFile0 = new Path(valbaseDir, "input0.seq")
     val seqFile = new Path(valbaseDir, "input.seq")
     val stateDir = new Path(valbaseDir, "state")
     val outputDir0 = new Path(valbaseDir, "output0")
+    val outputDir1 = new Path(valbaseDir, "output1")
     val outputDir = new Path(valbaseDir, "output")
 
     // write them
-    val writer = new SequenceFile.Writer(fs, conf, seqFile, classOf[Text], classOf[VectorWritable])
+    val writer0 = new SequenceFile.Writer(fs, conf, seqFile0, classOf[Text], classOf[VectorWritable])
     var i = 0
-    for (vector <- vectors) {
-      writer.append(new Text(s"point-$i"), new VectorWritable(vector));
+    for (vector <- vectors0) {
+      writer0.append(new Text(s"point-$i"), new VectorWritable(vector));
       i += 1
     }
-    writer.close();
-//    System.out.println("Wrote")
+    writer0.close();
+    //    System.out.println("Wrote")
 
-    def cluster(output: Path, iter: Int, numCluster: Int) =
-      DirichletDriver.run(conf, seqFile, output,
+    def cluster(seq: Path, output: Path, iter: Int, numCluster: Int) =
+      DirichletDriver.run(conf, seq, output,
         new DistributionDescription(classOf[GaussianClusterDistribution].getName(), classOf[DenseVector].getName(),
           //            classOf[ManhattanDistanceMeasure].getName(),
           //            classOf[CosineDistanceMeasure].getName(),
@@ -85,23 +87,51 @@ class MahoutClusterer extends Clusterer {
 
     val mainIter = numIter / 10
 
-    cluster(outputDir0, mainIter, 1)
+    // scale
+    cluster(seqFile0, outputDir0, mainIter, 1)
 
     def clusterToComponent(gaussian: GaussianCluster): Component = {
       implicit def vectorElemToDouble(v: Vector): Array[Double] =
-        v.map { e => e.get() }.toArray
+        v.all.map { e => e.get() }.toArray
       Component(gaussian.getCenter(), gaussian.getRadius(), gaussian.getNumObservations())
     }
 
-    val mainComponent = clusterToComponent(new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir0,
+    val scalingComponent = clusterToComponent(new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir0,
       s"clusters-$mainIter-final"), PathType.LIST, PathFilters.logsCRCFilter(),
       conf).head.getSecond().getValue().asInstanceOf[GaussianCluster])
-      
-    System.out.println("Main radius: "+ mainComponent.radii.toList)
 
-//    System.out.println("Main")
-    cluster(outputDir, numIter, 20)
-//    System.out.println("Cluster")
+    val scalingValue = scalingComponent.radii.toList.map(d => Math.abs(d)).max
+    System.err.println("Scaling value: " + scalingValue)
+
+    val vectors = cloud.points.map { d =>
+      val v = new DenseVector(d, true);
+      val l = v.size() - 1
+      val e = v.getQuick(l)
+      v.set(l, e * scalingValue)
+      v
+    }
+
+    val writer = new SequenceFile.Writer(fs, conf, seqFile, classOf[Text], classOf[VectorWritable])
+    i = 0
+    for (vector <- vectors) {
+      writer.append(new Text(s"point-$i"), new VectorWritable(vector));
+      i += 1
+    }
+    writer.close();
+
+    // execution
+
+    cluster(seqFile, outputDir1, mainIter, 1)
+
+    val mainComponent = clusterToComponent(new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir1,
+      s"clusters-$mainIter-final"), PathType.LIST, PathFilters.logsCRCFilter(),
+      conf).head.getSecond().getValue().asInstanceOf[GaussianCluster])
+
+    System.out.println("Main radius: " + mainComponent.radii.toList)
+
+    //    System.out.println("Main")
+    cluster(seqFile, outputDir, numIter, 20)
+    //    System.out.println("Cluster")
 
     val parts = new SequenceFileDirIterable[IntWritable, ClusterWritable](new Path(outputDir,
       s"clusters-$numIter-final"), PathType.LIST, PathFilters.logsCRCFilter(), conf).map {
@@ -109,10 +139,10 @@ class MahoutClusterer extends Clusterer {
         record.getSecond().getValue().asInstanceOf[GaussianCluster]
     } filter { gaussian => gaussian.getNumObservations() > 0 } map clusterToComponent
 
-//    System.out.println(parts.size)
-//    System.out.println(parts)
-//    for (component <- parts)
-//      System.out.println(component.center.mkString("", ", ", ""))
+    //    System.out.println(parts.size)
+    //    System.out.println(parts)
+    //    for (component <- parts)
+    //      System.out.println(component.center.mkString("", ", ", ""))
 
     Components(mainComponent, parts.toList)
   }

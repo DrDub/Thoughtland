@@ -34,10 +34,10 @@ import net.duboue.thoughtland.cluster.ClustererEngine
 @Test
 class MahoutClustererTest {
   @Test
-  def testMahoutClustering = {
+  def testMahoutClustering() = {
     val tmpDir = new File(File.createTempFile("test", "mahout").getAbsolutePath() + ".dir")
     assertTrue(tmpDir.mkdirs())
-    implicit val env = Environment(new File("."), tmpDir, Config(1L, false))
+    implicit val env = Environment(new File("."), tmpDir, Config(1L, false, false))
     val cloud = CloudExtractorFactory(CloudExtractorEngine.File)
       .apply(TrainingData(classOf[MahoutClustererTest].getResource("auto-mpg-points2.csv").toURI), "", Array())
     assertEquals(397, cloud.points.length)
